@@ -3,6 +3,10 @@
     src: url(./Mojangles.otf);
 }
 
+html, body {
+    background: transparent !important;
+}
+
 .bg-container {
     position: fixed;
     top: 0;

@@ -214,12 +214,7 @@
         }
 
         function O() {
-            if (!["localhost"].includes(b.location.hostname) && b !== b.top) {
-                document.getElementById("cta").addEventListener("click", function () {
-                    b.open("https://blockblastsolver.com", "_blank")
-                });
-                return
-            }
+
             var e = n;
 
             function t() {

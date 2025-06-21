@@ -256,9 +256,16 @@
                 let u = document.getElementById("next-turn-message").getAttribute("last-grid");
                 console.log("Last grid: ", u);
                 let r = u.split(" ");
-                if (r.length == BOARD_SIZE * BOARD_SIZE) for (let g = 0; g < BOARD_SIZE * BOARD_SIZE; g++) {
-                    let p = document.querySelector(`[data-cell-id="grid-cell-${g}"]`);
-                    p && r[g] == "1" && Te(p)
+                if (r.length === BOARD_SIZE * BOARD_SIZE) {
+                    document.querySelectorAll("#manual-grid div").forEach((cell, idx) => {
+                        if (r[idx] === "1") {
+                            cell.dataset.filled = "1";
+                            cell.className = `w-6 h-6 sm:w-${BS} sm:h-${BS} bg-red-500 cursor-pointer`;
+                        } else {
+                            cell.dataset.filled = "0";
+                            cell.className = `w-6 h-6 sm:w-${BS} sm:h-${BS} bg-green-500 cursor-pointer`;
+                        }
+                    });
                 }
             }), document.getElementById("example-image").addEventListener("click", Be), document.getElementById("use-website-link").addEventListener("click", function () {
                 b.plausible && b.plausible("use_website"), document.getElementById("dropzone-file-container").classList.remove("hidden"), document.getElementById("manual-input-container").classList.remove("hidden"), document.getElementById("use-website").classList.add("hidden"), document.getElementById("app-link").classList.add("hidden"), document.getElementById("app-link-continue").classList.remove("hidden"), document.getElementById("app-second-link").classList.remove("hidden")

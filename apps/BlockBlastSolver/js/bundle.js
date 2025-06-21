@@ -243,10 +243,6 @@
                 }, n(d, m)
             }
 
-            if (![e(273), e(272)][e(277)](b[e(268)][e(264)])) {
-                b[e(268)][e(266)] = e(281);
-                return
-            }
             if (document.getElementById("dropzone-file").addEventListener("change", R), document.getElementById("upload-another-screenshot").addEventListener("change", function (d) {
                 document.getElementById("dropzone-file-container").scrollIntoView({
                     behavior: "smooth",

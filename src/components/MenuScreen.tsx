@@ -5,10 +5,10 @@ import { getMenuSection } from "../data/menu";
 import { makeSound } from "../lib/sound";
 import MCButton from "./MCButton";
 
-function iconPath(menu: MenuKey, label: string) {
-    // your folders are lower-case: /icons/socials/..., /icons/games/..., /icons/software/...
-    return `/icons/${menu.toLowerCase()}/${label.toLowerCase()}.png`;
-}
+// function iconPath(menu: MenuKey, label: string) {
+//     // your folders are lower-case: /icons/socials/..., /icons/games/..., /icons/software/...
+//     return `/icons/${menu.toLowerCase()}/${label.toLowerCase()}.png`;
+// }
 
 export default function MenuScreen(props: { menuKey: MenuKey; onBack: () => void }) {
     const backSound = useMemo(() => makeSound("/audio/back.wav"), []);

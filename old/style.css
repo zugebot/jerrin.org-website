@@ -1,6 +1,6 @@
 @font-face {
     font-family: MCFont;
-    src: url(./Mojangles.otf);
+    src: url(../jerrin-org/public/Mojangles.otf);
 }
 
 html, body {
@@ -30,7 +30,7 @@ html, body {
     height: calc(100% + 1vh);
     margin-top: -0.6vh;
     margin-left: -0.3vw;
-    background: url("./assets/panorama_light.png") repeat-x 0 0;
+    background: url("assets/panorama_light.png") repeat-x 0 0;
     background-size: cover;
     filter: blur(0.2vw);
     z-index: -1;
@@ -51,7 +51,7 @@ html, body {
     }
 
 #titleScreen button {
-    background: url(./assets/BG_Button.png);
+    background: url(assets/BG_Button.png);
     background-repeat:no-repeat;
     background-size: 100% 20vw !important;
     width: 100vw !important;
@@ -60,7 +60,7 @@ html, body {
 }
 
 #titleScreen button:hover {
-    background: url(./assets/BB_Button.png);
+    background: url(assets/BB_Button.png);
     background-repeat:no-repeat;
     background-size: 100% 20vw;
     color: #FFFF55;
@@ -150,7 +150,7 @@ body {
     text-rendering: optimizeLegibility;
     margin-top: 1.5vh;
     font-family: MCFont;
-    background: url(./assets/BG_Button.png);
+    background: url(assets/BG_Button.png);
     background-repeat:no-repeat;
     background-size: 100% 3vw;
     border: none;
@@ -163,7 +163,7 @@ body {
 }
 
 #titleScreen button:hover {
-    background: url(./assets/BB_Button.png);
+    background: url(assets/BB_Button.png);
     background-repeat:no-repeat;
     background-size: 100% 3vw;
     color: #FFFF55;
@@ -222,7 +222,7 @@ body {
     display: inline-block;
     text-rendering: optimizeLegibility;
     font-family: MCFont;
-    background: url(./assets/BG_Button.png);
+    background: url(assets/BG_Button.png);
     background-repeat:no-repeat;
     background-size: 100% 4.5vw;
     border: none;
@@ -249,7 +249,7 @@ body {
 }
 
 #menuButtons a:hover {
-    background: url(./assets/BB_Button.png);
+    background: url(assets/BB_Button.png);
     background-repeat:no-repeat;
     background-size: 100% 4.5vw;
     color: #FFFF55;

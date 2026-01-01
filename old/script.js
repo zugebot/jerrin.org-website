@@ -81,9 +81,9 @@ function setFontSize() {
 
 setFontSize()
 
-const hover = new Audio('./assets/audio/focus.wav');
-const click = new Audio('./assets/audio/press.wav');
-const back = new Audio('./assets/audio/back.wav');
+const hover = new Audio('./audio/focus.wav');
+const click = new Audio('./audio/press.wav');
+const back = new Audio('./audio/back.wav');
 
 document.querySelectorAll("#titleScreen button").forEach((element)=>{
     element.addEventListener("mouseover", (event) => {
@@ -116,7 +116,7 @@ function loadMenu(name){
     const array = this[name]
     document.getElementById('menuButtons').innerHTML = ""
     array.forEach((element)=>{
-        document.getElementById('menuButtons').innerHTML += `<a target="_blank" href="${element[1]}"><img src="./assets/icons/${name}/${element[0].toLowerCase()}.png"></img><span>${element[0]}</span></a><br>`
+        document.getElementById('menuButtons').innerHTML += `<a target="_blank" href="${element[1]}"><img src="./icons/${name}/${element[0].toLowerCase()}.png"></img><span>${element[0]}</span></a><br>`
     })
 }
 

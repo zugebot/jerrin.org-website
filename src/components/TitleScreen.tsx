@@ -2,7 +2,6 @@
 import type { MenuKey } from "../data/menu";
 import { MENU } from "../data/menu";
 import MCButton from "./MCButton";
-import SplashText from "./SplashText";
 
 export default function TitleScreen(props: { onOpenMenu: (k: MenuKey) => void }) {
     return (

@@ -1,0 +1,69 @@
+/* jerrin-org/src/index.css */
+@import "tailwindcss";
+
+@font-face {
+  font-family: MCFont;
+  src: url("/Mojangles.otf");
+  font-display: swap;
+}
+
+:root {
+  --text-width: 2vw;
+}
+
+@layer base {
+  html, body, #root {
+    font-family: MCFont, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* force common offenders to inherit */
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: transparent;
+}
+
+@keyframes panoramaScroll {
+  from { background-position: 0px 0px; }
+  to   { background-position: -20000px 0px; }
+}
+@layer utilities {
+  .panorama-scroll {
+    animation: panoramaScroll 400000s linear infinite;
+  }
+}
+
+
+/* Minecraft button skins (same behavior as your CSS) */
+.mc-btn {
+  background-image: url("/menu/BG_Button.png");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  text-shadow: 0.15vw 0.15vw #504f50;
+}
+.mc-btn:hover {
+  background-image: url("/menu/BB_Button.png");
+  color: #FFFF55;
+  text-shadow: 0.15vw 0.15vw rgb(79, 86, 6);
+}
+
+/* Menu link skin */
+.mc-link {
+  background-image: url("/menu/BG_Button.png");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  text-shadow: 0.15vw 0.15vw #504f50;
+}
+.mc-link:hover {
+  background-image: url("/menu/BB_Button.png");
+  color: #FFFF55;
+  text-shadow: 0.15vw 0.15vw rgb(79, 86, 6);
+}

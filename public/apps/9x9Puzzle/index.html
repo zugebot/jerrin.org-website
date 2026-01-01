@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- release -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzles & Survival Puzzle</title>
+    <link rel="canonical" href="index.html">
+    <script src="tailwind.js"></script>
+    <style>
+        @media (min-width: 768px) {
+            .side-by-side {
+                display: flex;
+                flex-direction: row;
+                gap: 2rem;
+                align-items: flex-start; /* Align items at the top */
+            }
+        }
+    </style>
+
+    <!-- Favicon -->
+
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-B1FG47XY9K"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-B1FG47XY9K');
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-9">
+    <div class="flex items-center mb-4">
+        <img src="logo.png" alt="Logo" class="w-24 h-24" alt="Block Blast Solver Logo">
+    </div>
+    <div id="discord-container" class="bg-indigo-600 p-4 rounded-lg shadow-md mb-4 text-center hidden">
+
+    </div>
+    <div id="competitive-block-container" class="hidden">
+        <a href="https://www.colorblockjamsolver.com?utm_medium=block_blast_solver" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-white hover:text-indigo-100 font-bold bg-blue-600 p-4 rounded-lg shadow-md mb-4 text-center" onclick="window.plausible('competitive_block_call'); return true;">
+            <svg class="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Do you play Color Block Jam?<br/>Try our solver!
+        </a>
+    </div>
+    <div id="infinite-aura-web-container" class="hidden">
+        <a href="https://www.colorblockjamsolver.com?utm_medium=block_blast_solver" target="_blank" rel="noopener noreferrer" class="bg-blue-600 p-4 rounded-lg shadow-md mb-4 text-center inline-flex items-center text-white hover:text-indigo-100 font-bold" onclick="window.plausible('infinite_aura_web_call'); return true;">
+            <svg class="w-6 h-6 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Do you play Color Block Jam?<br/>Try our solver!
+        </a>
+    </div>
+    <div class="bg-white p-9 rounded-lg shadow-md flex flex-col items-center" id="cta">
+        <h2 class="text-xl font-semibold mb-4">Block Blast Solver</h2>
+        <form class="space-y-4">
+            <div class="flex items-center justify-center w-full flex-col">
+                <div id="app-link" class="hidden">
+                    <p class="text-lg font-bold text-green-600 mb-2 animate-bounce">🎉 Amazing News: The App is Now FREE for LIMITED TIME! 🎉</p>
+                    <a href="https://apps.apple.com/us/app/block-puzzle-helper/id6736616254" target="_blank" rel="noopener noreferrer" class="mb-4 inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition duration-300" onclick="window.plausible('app_store_call'); return true;">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.09997 22C7.78997 22.05 6.79997 20.68 5.95997 19.47C4.24997 17 2.93997 12.45 4.69997 9.39C5.56997 7.87 7.12997 6.91 8.81997 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/>
+                        </svg>
+                        Download on the App Store
+                    </a>
+                </div>
+                <div id="use-website" class="flex ml-4 flex-col hidden">
+                    <a href="index.html#" id="use-website-link" class="text-blue-500 hover:underline">or Use the website instead</a>
+                </div>
+                <div id="dropzone-file-container">
+                    <div id="actual-button-to-upload">
+                        <label for="dropzone-file" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg class="w-10 h-10 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                            <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to test</span> or drag and drop</p>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF, WEBP...</p>
+                            </div>
+                        <input id="dropzone-file" type="file" class="hidden" accept="image/*" />
+                        </label>
+                    </div>
+                    <div id="upload-spinner" class="flex justify-center items-center mt-4 hidden p-4">
+                        <div
+                        class="inline-block h-12 w-12 animate-spin rounded-full border-9 border-solid border-zinc-950 border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite]"
+                        role="status">
+                        <span
+                          class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
+                          >Loading...</span
+                        >
+                      </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div id="manual-input-container">
+            <p class="mt-4 text-gray-600 text-sm font-bold text-center">OR</p>
+            <button id="toggle-manual-input" class="mt-4 mb-4 bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                Manual input
+        </button>
+        </div>
+
+    </div>
+    <div class="mt-4 text-center"></div>
+        <div id="manual-input-sections" class="hidden flex flex-col space-y-9">
+            <div class="flex flex-col md:flex-row md:space-x-9">
+                <!-- Grid Input -->
+                <div class="bg-white p-9 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4">Grid Input</h3>
+                    <div id="manual-grid" class="grid grid-cols-9 gap-1 mb-4 sm:gap-2">
+                        <!-- Grid cells will be added here via JS -->
+                    </div>
+                </div>
+
+                <!-- Figures Input -->
+                <div class="bg-white p-9 rounded-lg shadow-md mt-4">
+                    <h3 class="text-xl font-semibold mb-4">Figures Input</h3>
+                    <div class="flex flex-wrap gap-9 justify-center">
+                        <div class="figure-input-container">
+                            <h4 class="text-lg mb-2">Figure 1</h4>
+                            <div class="manual-figure grid grid-cols-5 gap-1">
+                                <!-- Figure cells will be added here via JS -->
+                            </div>
+                        </div>
+                        <div class="figure-input-container">
+                            <h4 class="text-lg mb-2">Figure 2</h4>
+                            <div class="manual-figure grid grid-cols-5 gap-1">
+                                <!-- Figure cells will be added here via JS -->
+                            </div>
+                        </div>
+                        <div class="figure-input-container">
+                            <h4 class="text-lg mb-2">Figure 3</h4>
+                            <div class="manual-figure grid grid-cols-5 gap-1">
+                                <!-- Figure cells will be added here via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <button id="solve-manual" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                    Solve Manual Input
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white p-9 rounded-lg shadow-md mb-9 flex flex-col items-center">
+        <img src="" alt="" id="example-image" class="" />
+    </div>
+    <div class="flex flex-col md:flex-row space-y-9 md:space-y-0 md:space-x-9" id="analysis-container">
+        <div id="grid-container" class="hidden bg-white p-9
+         rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">9x9 Grid Analysis</h2>
+            <div id="grid-tiles" class="grid grid-cols-9 gap-1 sm:gap-2"></div>
+        </div>
+        <div id="figures-container" class="hidden bg-white p-9 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Figure Analysis</h2>
+            <div id="figures-grid" class="flex flex-wrap gap-4 sm:gap-6 md:gap-9"></div>
+            <div class="mt-4 text-center">
+                <a href="help.html" class="text-blue-500 hover:text-blue-600">
+                    Need help getting the grid/figures right? Click here for a guide
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="side-by-side mt-9 mb-9">
+        <div id="solution-container" class="hidden bg-white p-9 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">First line(s)</h2>
+            <div id="solution-grid" class="grid grid-cols-9 gap-1 sm:gap-2"></div>
+        </div>
+        <div id="steps-container" class="hidden bg-white p-9 rounded-lg shadow-md sm:mt-0 mt-4">
+            <h2 class="text-xl font-bold mb-4">Step-by-Step Solution</h2>
+            <div id="steps-list" class="space-y-4"></div>
+        </div>
+    </div>
+    <div class="p-4 mb-9 text-center hidden" id="cooked-message">
+        <p class="text-2xl font-bold text-red-600">You are cooked! 💀💀</p>
+        <p class="mt-2 text-lg text-gray-600">The game does not always have a solution.</p>
+    </div>
+    <div class="p-4 mb-9 text-center hidden" id="next-turn-message">
+        <p class="text-2xl font-bold text-blue-600">Ready for next turn!</p>
+        <p class="mt-2 text-lg text-gray-600">Upload another screenshot or fill manually to continue solving.</p>
+        <div class="flex flex-col items-center gap-4 mt-6">
+            <label for="upload-another-screenshot" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition duration-300 ease-in-out cursor-pointer inline-block">
+                Upload Another Screenshot
+                <input id="upload-another-screenshot" type="file" class="hidden" accept="image/*" />
+            </label>
+            <button id="manual-input-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+                Continue Manually
+            </button>
+            <div id="app-link-continue" class="hidden">
+                <a href="https://apps.apple.com/us/app/block-puzzle-helper/id6736616254" target="_blank" rel="noopener noreferrer" class="mb-4 inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition duration-300" onclick="window.plausible('app_store_call_continue'); return true;">
+                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.09997 22C7.78997 22.05 6.79997 20.68 5.95997 19.47C4.24997 17 2.93997 12.45 4.69997 9.39C5.56997 7.87 7.12997 6.91 8.81997 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/>
+                    </svg>
+                    Download on the App Store
+                </a>
+            </div>
+        </div>
+    </div>
+    <div id="fuelviral-container" class="hidden bg-gradient-to-r from-pink-500 to-purple-600 p-9 rounded-2xl shadow-xl mb-9 text-center border-2 border-white/20 backdrop-blur-sm">
+
+    </div>
+
+    <div class="flex flex-col md:flex-row space-y-9 md:space-y-0 md:space-x-9 mt-9">
+        <div id="debug-container" class="hidden bg-white p-9 rounded-lg shadow-md">
+        </div>
+        <div id="figures-debug-container" class="hidden bg-white p-9 rounded-lg shadow-md">
+        </div>
+    </div>
+
+    <script src="js/bundle.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        if (typeof window.App.initializeApp === 'function') {
+          window.App.initializeApp();
+        } else {
+          console.error('App.initializeApp function not found');
+        }
+      });
+    </script>
+    <script defer data-domain="blockblastsolver.com" src="https://stats.13ug1mb.com/js/script.outbound-links.pageview-props.tagged-events.js"></script>
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+</body>
+</html>

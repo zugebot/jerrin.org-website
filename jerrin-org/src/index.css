@@ -1,0 +1,49 @@
+/* jerrin-org/src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: MCFont;
+  src: url("/jerrin-org/public/Mojangles.otf");
+  font-display: swap;
+}
+
+:root {
+  --text-width: 2vw;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: transparent;
+}
+
+/* Minecraft button skins (same behavior as your CSS) */
+.mc-btn {
+  background-image: url("/assets/BG_Button.png");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  text-shadow: 0.15vw 0.15vw #504f50;
+}
+.mc-btn:hover {
+  background-image: url("/assets/BB_Button.png");
+  color: #FFFF55;
+  text-shadow: 0.15vw 0.15vw rgb(79, 86, 6);
+}
+
+/* Menu link skin */
+.mc-link {
+  background-image: url("/assets/BG_Button.png");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  text-shadow: 0.15vw 0.15vw #504f50;
+}
+.mc-link:hover {
+  background-image: url("/assets/BB_Button.png");
+  color: #FFFF55;
+  text-shadow: 0.15vw 0.15vw rgb(79, 86, 6);
+}

@@ -9,17 +9,18 @@ type Props = {
 type State = { error: unknown; componentStack?: string };
 
 export class ErrorBoundary extends React.Component<Props, State> {
-    state: State = { error: null };
+    state: State = { error: null, componentStack: undefined };
 
     static getDerivedStateFromError(error: unknown): State {
-        return { error };
+        return { error, componentStack: undefined };
     }
 
     componentDidCatch(error: unknown, info: React.ErrorInfo) {
-        // This logs a nicer message + component stack in the console
         console.error("Caught by ErrorBoundary:", error);
         console.error("Component stack:", info.componentStack);
-        this.setState({ componentStack: info.componentStack });
+
+        // React's types can be `string | null` depending on version.
+        this.setState({ componentStack: info.componentStack ?? undefined });
     }
 
     render() {
@@ -31,11 +32,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
                 });
             }
 
-            // Default readable fallback UI
             const message =
-                this.state.error instanceof Error
-                    ? this.state.error.message
-                    : String(this.state.error);
+                this.state.error instanceof Error ? this.state.error.message : String(this.state.error);
 
             return (
                 <div className="h-full w-full p-6 text-left bg-black/70 text-white">

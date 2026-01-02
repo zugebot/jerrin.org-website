@@ -9,7 +9,7 @@ type GuiCtx = {
 const SCALE_STEP = 0.25;
 const INV_S = 4; // 0.25 increments
 const DEFAULT = 2.5;
-const LOWER = 0.25;
+const LOWER = 1.0;
 const UPPER = 6.0;
 
 const GuiContext = createContext<GuiCtx | null>(null);

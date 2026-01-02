@@ -5,8 +5,8 @@ export const MENU = [
     {
         label: "Socials",
         items: [
-            { label: "LinkedIn", icon: "/icons/socials/handshake.jpg", href: "https://app.joinhandshake.com/profiles/jerrin" },
-            { label: "Handshake", icon: "/icons/socials/LinkedIn_icon.svg.png", href: "https://www.linkedin.com/in/jerrin-shirks-69b697283/" },
+            { label: "Handshake", icon: "/icons/socials/handshake.jpg", href: "https://app.joinhandshake.com/profiles/jerrin" },
+            { label: "LinkedIn", icon: "/icons/socials/LinkedIn_icon.svg.png", href: "https://www.linkedin.com/in/jerrin-shirks-69b697283/" },
             { label: "Youtube", icon: "/icons/socials/youtube.png", href: "https://www.youtube.com/jerrinth3glitch" },
             { label: "Speedrun.com", icon: "/icons/socials/speedrun.com.png", href: "https://www.speedrun.com/users/jerrinth3glitch" },
             { label: "Discord", icon: "/icons/socials/discord.png", href: "https://discord.gg/vGW4pSF8wc" },
@@ -17,7 +17,9 @@ export const MENU = [
     {
         label: "Games",
         items: [
-            { label: "The Rock Dating Sim", icon: "icons/games/the rock dating sim.png", href: "/apps/rockdatingsim/index.html" }
+            { label: "The Rock Dating Sim", icon: "icons/games/the rock dating sim.png", href: "/apps/rockdatingsim/index.html" },
+            { label: "Renderer", icon: "icons/games/snow.jpg", href: "/apps/renderer/app.html" }
+
         ],
     },
     {
@@ -27,11 +29,21 @@ export const MENU = [
     {
         label: "Web-Tools",
         items: [
-            { label: "9x9 Puzzle Solver", icon: "icons/games/9x9 puzzle.png", href: "/apps/9x9Puzzle/index.html" },
             { label: "Mudae '$oc' Solver", icon: "icons/web-tools/orb_red.webp", href: "/apps/mudae/oc/index.html" },
-            { label: "Mudae '$oq' Solver", icon: "icons/web-tools/orb_purple.webp", href: "/apps/mudae/oq/index.html" }
+            { label: "Mudae '$oq' Solver", icon: "icons/web-tools/orb_purple.webp", href: "/apps/mudae/oq/index.html" },
+            { label: "9x9 Puzzle Solver", icon: "icons/games/9x9 puzzle.png", href: "/apps/9x9Puzzle/index.html" },
         ],
     },
+    {
+        label: "Discord-Bots",
+        items: [
+            { label: "Jerrinth Bot", icon: "icons/discord-bots/Jerrinth Bot.png", href: "https://discord.com/oauth2/authorize?client_id=856411268633329684&permissions=0&scope=applications.commands+bot" },
+            { label: "ChuzzOS", icon: "icons/discord-bots/ChuzzOS.webp", href: "https://discord.com/oauth2/authorize?client_id=1121576095637049475&permissions=8&scope=bot+applications.commands" },
+        ],
+    },
+
+
+
 ] as const;
 
 export type MenuSection = (typeof MENU)[number];

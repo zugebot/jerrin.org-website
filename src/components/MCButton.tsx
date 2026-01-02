@@ -118,28 +118,52 @@ export default function MCButton({
             {/* content */}
             {hasIcon ? (
                 <>
-                    <img
-                        src={iconSrc}
-                        alt={iconAlt}
-                        draggable={false}
-                        className="pointer-events-none relative z-10"
-                        style={{ width: sz, height: sz, imageRendering: "pixelated" }}
-                    />
+                    {/* icon stack */}
+                    <div
+                        className="relative flex items-center justify-center w-[16px] h-[16px]"
+                        style={{ width: sz, height: sz }}
+                    >
+                        {/* enchant background */}
+                        <img
+                            src="/menu/a_enchant_purple.png"
+                            alt=""
+                            draggable={false}
+                            className="absolute inset-0 pointer-events-none w-[16px] h-[16px]"
+                            style={{ imageRendering: "pixelated" }}
+                        />
+
+                        {/* main icon */}
+                        <img
+                            src={iconSrc}
+                            alt={iconAlt}
+                            draggable={false}
+                            className="relative pointer-events-none p-[1px] w-[14px] h-[14px]"
+                            style={{
+                                width: sz,
+                                height: sz,
+                                imageRendering: "pixelated",
+                            }}
+                        />
+                    </div>
+
+                    {/* spacer column */}
                     <span className="relative z-10" />
+
+                    {/* label */}
                     <span
                         className="pointer-events-none relative z-10 whitespace-nowrap overflow-hidden text-ellipsis text-left"
                         style={{ textShadow: shadow }}
                     >
-            {label}
-          </span>
+      {label}
+    </span>
                 </>
             ) : (
                 <span
                     className="pointer-events-none relative z-10 whitespace-nowrap overflow-hidden text-ellipsis w-full"
                     style={{ textShadow: shadow }}
                 >
-          {label}
-        </span>
+    {label}
+  </span>
             )}
         </button>
     );

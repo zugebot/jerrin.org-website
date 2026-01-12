@@ -1,5 +1,6 @@
 // src/components/ErrorBoundary.tsx
 import React from "react";
+import {info} from "autoprefixer";
 
 type Props = {
     children: React.ReactNode;
@@ -20,7 +21,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
         console.error("Component stack:", info.componentStack);
 
         // React's types can be `string | null` depending on version.
-        this.setState({ componentStack: info.componentStack ?? undefined });
+        this.setState({error: undefined, componentStack: info.componentStack ?? undefined });
     }
 
     render() {

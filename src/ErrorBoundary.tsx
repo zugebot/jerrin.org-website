@@ -1,6 +1,5 @@
 // src/components/ErrorBoundary.tsx
 import React from "react";
-import {info} from "autoprefixer";
 
 type Props = {
     children: React.ReactNode;

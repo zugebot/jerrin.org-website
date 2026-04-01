@@ -223,7 +223,7 @@
         if (mark === "Blue"   && (isLine || isDiag))  return false;
         if (mark === "Yellow" && !isDiag)             return false;
         if (mark === "Green"  && !isLine)             return false;
-        if (mark === "Orange" && !(dr <= 1 && dc <= 1)) return false;
+        if (mark === "Orange" && !((dr === 1 && dc === 0) || (dr === 0 && dc === 1))) return false;
       }
     }
     return true;

@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import GuiRoot from "./gui/GuiRoot";
 import Panorama from "./components/Panorama";

@@ -7,8 +7,7 @@ type GuiCtx = {
 };
 
 const SCALE_STEP = 0.25;
-const INV_S = 4; // 0.25 increments
-const DEFAULT = 2.5;
+const INV_S = 4;
 const LOWER = 1.0;
 const UPPER = 6.0;
 
@@ -22,6 +21,19 @@ function quantize(n: number) {
     return Math.round(n * INV_S) / INV_S;
 }
 
+function getInitialGuiScale() {
+    const buttonBaseWidth = 210;
+    const pagePadding = 64;
+    const usableWidth = Math.max(0, window.innerWidth - pagePadding);
+    const fitted = usableWidth / buttonBaseWidth;
+
+    return clamp(quantize(fitted), LOWER, 5);
+}
+
+function getAutoScale() {
+    return clamp(quantize(getInitialGuiScale()), LOWER, UPPER);
+}
+
 export function useGui() {
     const ctx = useContext(GuiContext);
     if (!ctx) throw new Error("useGui must be used inside <GuiRoot/>");
@@ -29,63 +41,63 @@ export function useGui() {
 }
 
 export default function GuiRoot(props: { children: React.ReactNode }) {
-    const [scale, setScaleRaw] = useState(() => {
-        const saved = localStorage.getItem("guiScale");
-        const n = saved ? Number(saved) : DEFAULT;
-        return Number.isFinite(n) ? clamp(quantize(n), LOWER, UPPER) : DEFAULT;
-    });
+    const [scale, setScaleRaw] = useState(() => getAutoScale());
 
     const setScale = (n: number) => {
         const q = clamp(quantize(n), LOWER, UPPER);
         setScaleRaw(q);
-        localStorage.setItem("guiScale", String(q));
     };
 
-    const bump = (dir: 1 | -1) => setScale(scale + dir * SCALE_STEP);
+    const bump = (dir: 1 | -1) => {
+        setScaleRaw((prev) => clamp(quantize(prev + dir * SCALE_STEP), LOWER, UPPER));
+    };
+
+    useEffect(() => {
+        const onResize = () => {
+            setScaleRaw(getAutoScale());
+        };
+
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
 
     useEffect(() => {
         const onWheel = (e: WheelEvent) => {
             if (!e.ctrlKey) return;
 
-            // Stop browser zoom
             e.preventDefault();
 
             const dir: 1 | -1 = e.deltaY < 0 ? 1 : -1;
-            bump(dir);
+            setScaleRaw((prev) => clamp(quantize(prev + dir * SCALE_STEP), LOWER, UPPER));
         };
 
         window.addEventListener("wheel", onWheel, { passive: false });
-        return () => window.removeEventListener("wheel", onWheel as any);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [scale]);
+        return () => window.removeEventListener("wheel", onWheel as EventListener);
+    }, []);
 
-    const value = useMemo<GuiCtx>(() => ({ scale, setScale, bump }), [scale]);
+    const value = useMemo<GuiCtx>(
+        () => ({ scale, setScale, bump }),
+        [scale]
+    );
 
     return (
         <GuiContext.Provider value={value}>
             <div className="fixed inset-0 overflow-hidden">
-                {/* ✅ not scaled: your whole app renders normally */}
                 {props.children}
 
-                {/* tiny HUD so you can see GUI scale */}
                 <div className="fixed left-0 top-0 z-[9999] rounded-br bg-black/60 px-[4px] py-[1px] text-[16px] text-white">
-                    GUI: {scale} (Ctrl + Wheel)
+                    GUI: {scale} (Ctrl + Wheel, resize resets)
                 </div>
 
-                {/* ✅ global CSS variable used by ONLY .guiScaled */}
                 <style>{`
           :root { --guiScale: ${scale}; }
 
-          /* Only elements you wrap in .guiScaled get scaled */
           .guiScaled {
             position: absolute;
             left: 0;
             top: 0;
-
             transform: scale(var(--guiScale));
             transform-origin: top left;
-
-            /* compensate layout like your old approach */
             width: calc(100vw / var(--guiScale));
             height: calc(100vh / var(--guiScale));
           }

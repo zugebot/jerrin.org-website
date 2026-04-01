@@ -1,5 +1,13 @@
-// src/data/menu.ts
-export type MenuItem = { label: string; href: string };
+export type MenuItem = {
+    label: string;
+    icon: string;
+    href: string;
+};
+
+export type MenuSection = {
+    label: string;
+    items: readonly MenuItem[];
+};
 
 export const MENU = [
     {
@@ -15,23 +23,18 @@ export const MENU = [
         ],
     },
     {
-        label: "Games",
+        label: "Games & Tools",
         items: [
             { label: "The Rock Dating Sim", icon: "icons/games/the rock dating sim.png", href: "/apps/rockdatingsim/index.html" },
-            { label: "Renderer", icon: "icons/games/snow.jpg", href: "/apps/renderer/app.html" }
-
+            { label: "Renderer", icon: "icons/games/snow.jpg", href: "/apps/renderer/app.html" },
+            { label: "Mudae $oc/$oq/$ot Solver", icon: "icons/web-tools/orb_red.webp", href: "/mudae" },
+            { label: "9x9 Puzzle Solver", icon: "icons/games/9x9 puzzle.png", href: "/apps/9x9Puzzle/index.html" }
         ],
     },
     {
         label: "Software",
-        items: [{ label: "Jerrin's Retiming Tool", icon: "icons/software/jerrin's retiming tool.png", href: "/downloads/retimer/download_page.html" }],
-    },
-    {
-        label: "Web-Tools",
         items: [
-            { label: "Mudae '$oc' Solver", icon: "icons/web-tools/orb_red.webp", href: "/apps/mudae/oc/index.html" },
-            { label: "Mudae '$oq' Solver", icon: "icons/web-tools/orb_purple.webp", href: "/apps/mudae/oq/index.html" },
-            { label: "9x9 Puzzle Solver", icon: "icons/games/9x9 puzzle.png", href: "/apps/9x9Puzzle/index.html" },
+            { label: "Jerrin's Retiming Tool", icon: "icons/software/jerrin's retiming tool.png", href: "/downloads/retimer/download_page.html" }
         ],
     },
     {
@@ -41,17 +44,12 @@ export const MENU = [
             { label: "ChuzzOS", icon: "icons/discord-bots/ChuzzOS.webp", href: "https://discord.com/oauth2/authorize?client_id=1121576095637049475&permissions=8&scope=bot+applications.commands" },
         ],
     },
+] as const satisfies readonly MenuSection[];
 
+export type MenuKey = MenuSection["label"];
 
-
-] as const;
-
-export type MenuSection = (typeof MENU)[number];
-export type MenuKey = MenuSection["label"]; // "Socials" | "Games" | "Software"
-export type MenuItemsFor<K extends MenuKey> = Extract<MenuSection, { label: K }>["items"];
-
-export function getMenuSection<K extends MenuKey>(key: K): Extract<MenuSection, { label: K }> {
+export function getMenuSection(key: MenuKey): MenuSection {
     const s = MENU.find((x) => x.label === key);
     if (!s) throw new Error(`Unknown menu key: ${key}`);
-    return s as Extract<MenuSection, { label: K }>;
+    return s;
 }

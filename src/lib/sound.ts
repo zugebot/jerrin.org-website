@@ -1,8 +1,15 @@
-export function makeSound(url: string) {
-    const base = new Audio(url);
-    base.preload = "auto";
+export function makeSound(src: string, volume = 0.5) {
+    const audio = new Audio(src);
+    audio.preload = "auto";
+    audio.volume = volume;
+    audio.load();
+
     return () => {
-        const clone = base.cloneNode(true) as HTMLAudioElement;
-        void clone.play();
+        try {
+            audio.currentTime = 0;
+            audio.volume = volume;
+            void audio.play();
+        } catch {
+        }
     };
 }

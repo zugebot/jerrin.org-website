@@ -1,5 +1,5 @@
 // src/components/MCButton.tsx
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { makeSound } from "../lib/sound";
 
 type MCButtonProps = {
@@ -7,17 +7,15 @@ type MCButtonProps = {
     onClick?: () => void;
     disabled?: boolean;
 
-    // hardcoded “Minecraft GUI” sizes (px)
-    w?: number; // default 200
-    h?: number; // default 20
-    fontPx?: number; // default 10
+    w?: number;
+    h?: number;
+    fontPx?: number;
 
-    // icon support
     iconSrc?: string;
     iconAlt?: string;
-    iconSize?: number; // default: h - 4
-    iconPadLeft?: number; // default: 3
-    textPadRight?: number; // default: 6
+    iconSize?: number;
+    iconPadLeft?: number;
+    textPadRight?: number;
 };
 
 function useDpr() {
@@ -37,15 +35,14 @@ export default function MCButton({
                                      w = 200,
                                      h = 20,
                                      fontPx = 10,
-
                                      iconSrc,
                                      iconAlt = "",
                                      iconSize,
                                      iconPadLeft = 4,
                                      textPadRight = 6,
                                  }: MCButtonProps) {
-    const hoverSound = useMemo(() => makeSound("/audio/focus.wav"), []);
-    const clickSound = useMemo(() => makeSound("/audio/press.wav"), []);
+    const hoverSound = useMemo(() => makeSound("/audio/focus.wav", 0.5), []);
+    const clickSound = useMemo(() => makeSound("/audio/press.wav", 0.5), []);
 
     const textShadow: string = "#3c4143";
     const textShadowHover: string = "#3F4505";
@@ -154,16 +151,16 @@ export default function MCButton({
                         className="pointer-events-none relative z-10 whitespace-nowrap overflow-hidden text-ellipsis text-left"
                         style={{ textShadow: shadow }}
                     >
-      {label}
-    </span>
+                        {label}
+                    </span>
                 </>
             ) : (
                 <span
                     className="pointer-events-none relative z-10 whitespace-nowrap overflow-hidden text-ellipsis w-full"
                     style={{ textShadow: shadow }}
                 >
-    {label}
-  </span>
+                    {label}
+                </span>
             )}
         </button>
     );

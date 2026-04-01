@@ -98,7 +98,7 @@
 
         .palette {
             display: grid;
-            grid-template-columns: repeat(5, 56px);
+            grid-template-columns: repeat(4, 56px);
             gap: 10px;
             background: var(--panel);
             padding: 14px;
@@ -119,6 +119,12 @@
             justify-content: center;
         }
 
+        .inkBtn.clearBtn {
+            background: var(--danger);
+            color: #fff;
+            border: none;
+        }
+
         .inkBtn:hover { opacity: 0.9; }
 
         .inkBtn.active {
@@ -131,37 +137,19 @@
             height: 26px;
             pointer-events: none;
         }
-
-        .controls {
-            margin-top: 16px;
-        }
-
-        .resetBtn {
-            background: var(--danger);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 900;
-        }
     </style>
 </head>
 
 <body>
 <h2>Mudae '$oq' Assistant</h2>
 <p class="subtitle">
-    You get <b>7 non-purple clicks</b>. Purple clicks are free.<br>
+    <a href="/" style="color: #dbdee1; text-decoration: underline;">Go back to other solvers</a>
+    | You get <b>7 non-purple clicks</b>. Purples are free.<br>
     Blue=0, Teal=1, Green=2, Yellow=3, Orange=4 neighboring purples.
 </p>
 
 <div class="grid" id="grid"></div>
 <div class="palette" id="palette"></div>
-
-<div class="controls">
-    <button class="resetBtn" id="clearBtn">Clear Board</button>
-</div>
-
 <script>
     const N = 5;
     const TOTAL_PURPLES = 4;
@@ -188,11 +176,11 @@
         { key: "Green",  icon: ICONS.Green },
         { key: "Yellow", icon: ICONS.Yellow },
         { key: "Orange", icon: ICONS.Orange },
+        { key: "Clear" },
     ];
 
     const gridEl = document.getElementById("grid");
     const paletteEl = document.getElementById("palette");
-    const clearBtn = document.getElementById("clearBtn");
 
     let currentInk = "None";
     let board = Array.from({ length: N }, () => Array(N).fill(null));
@@ -304,23 +292,31 @@
 
     function createPalette() {
         paletteEl.innerHTML = "";
-        INKS.forEach((ink,i) => {
+        INKS.forEach((ink, i) => {
             const b = document.createElement("div");
-            b.className = "inkBtn" + (i===0 ? " active" : "");
-            b.onclick = () => {
-                currentInk = ink.key;
-                document.querySelectorAll(".inkBtn").forEach(x=>x.classList.remove("active"));
-                b.classList.add("active");
-            };
-            b.appendChild(icon(ink.icon));
+            b.className = "inkBtn" + (i === 0 ? " active" : "");
+
+            if (ink.key === "Clear") {
+                b.classList.add("clearBtn");
+                b.textContent = "Clear";
+                b.onclick = () => {
+                    board = Array.from({ length: N }, () => Array(N).fill(null));
+                    currentInk = "None";
+                    createPalette();
+                    update();
+                };
+            } else {
+                b.onclick = () => {
+                    currentInk = ink.key;
+                    document.querySelectorAll(".inkBtn").forEach(x => x.classList.remove("active"));
+                    b.classList.add("active");
+                };
+                b.appendChild(icon(ink.icon));
+            }
+
             paletteEl.appendChild(b);
         });
     }
-
-    clearBtn.onclick = () => {
-        board = Array.from({ length: N }, () => Array(N).fill(null));
-        update();
-    };
 
     createPalette();
     update();

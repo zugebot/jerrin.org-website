@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import type { MenuKey } from "../data/menu";
 import { getMenuSection } from "../data/menu";
 import { makeSound } from "../lib/sound";
@@ -31,7 +31,13 @@ export default function MenuScreen(props: { menuKey: MenuKey; onBack: () => void
                                     <MCButton
                                         label={it.label}
                                         iconSrc={it.icon}
-                                        onClick={() => window.open(it.href, "_blank", "noopener,noreferrer")}
+                                        onClick={() => {
+                                            if (it.href.startsWith("/")) {
+                                                window.location.href = it.href;
+                                            } else {
+                                                window.open(it.href, "_blank", "noopener,noreferrer");
+                                            }
+                                        }}
                                     />
                                 </div>
                             ))}

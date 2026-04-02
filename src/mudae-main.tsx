@@ -1,7 +1,6 @@
-// jerrin-org/src/main.tsx
 import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import MudaePage from "./pages/MudaePage";
 import "./index.css";
 import { ErrorBoundary } from "./ErrorBoundary.tsx";
 
@@ -15,7 +14,7 @@ window.addEventListener("unhandledrejection", (e) => {
 createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
         <ErrorBoundary>
-            <App />
+            <MudaePage />
         </ErrorBoundary>
     </React.StrictMode>
 );

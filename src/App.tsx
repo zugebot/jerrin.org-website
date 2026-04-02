@@ -1,13 +1,11 @@
 // src/App.tsx
 import { useEffect, useMemo, useState } from "react";
-import { Routes, Route } from "react-router-dom";
 import GuiRoot from "./gui/GuiRoot";
 import Panorama from "./components/Panorama";
 import TitleScreen from "./components/TitleScreen";
 import MenuScreen from "./components/MenuScreen";
 import { MENU, type MenuKey } from "./data/menu";
 import { makeSound } from "./lib/sound";
-import MudaePage from "./pages/MudaePage";
 import {preloadAudio, preloadImage} from "./lib/preload.ts";
 
 function HomePage() {
@@ -102,10 +100,5 @@ function HomePage() {
 }
 
 export default function App() {
-    return (
-        <Routes>
-            <Route path="/" element={<HomePage/>}/>
-            <Route path="/mudae" element={<MudaePage/>}/>
-        </Routes>
-    );
+    return <HomePage />;
 }

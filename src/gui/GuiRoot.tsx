@@ -86,7 +86,7 @@ export default function GuiRoot(props: { children: React.ReactNode }) {
                 {props.children}
 
                 <div className="fixed left-0 top-0 z-[9999] rounded-br bg-black/60 px-[4px] py-[1px] text-[16px] text-white">
-                    GUI: {scale} (Ctrl + Wheel, resize resets)
+                    GUI: {scale} (Ctrl + Wheel)
                 </div>
 
                 <style>{`

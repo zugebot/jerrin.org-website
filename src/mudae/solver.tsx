@@ -59,7 +59,7 @@ function Icon({ src, className }: { src: string; className?: string }) {
 function SolverShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="h-screen w-full overflow-auto bg-[#313338] p-5 text-[#dbdee1]">
-            <div className="mx-auto w-fit flex flex-col items-center justify-center" style={{ zoom: 2 }}>
+            <div className="mx-auto flex w-fit flex-col items-center justify-center [zoom:1] sm:[zoom:1.25] md:[zoom:1.5] lg:[zoom:1.75]">
                 {children}
             </div>
         </div>
@@ -100,19 +100,9 @@ function PaletteButton({
     );
 }
 
-function Palette({
-                     inks,
-                     currentInk,
-                     onSelect,
-                     onClear,
-                 }: {
-    inks: PaletteInk[];
-    currentInk: string;
-    onSelect: (ink: string) => void;
-    onClear: () => void;
-}) {
+function Palette({ inks, currentInk, onSelect, onClear }: { inks: PaletteInk[]; currentInk: string; onSelect: (ink: string) => void; onClear: () => void; }) {
     return (
-        <Panel className="mb-4 grid grid-cols-4 gap-[10px] p-[14px]">
+        <Panel className="mb-[10px] grid grid-cols-4 gap-[10px] p-[14px]">
             {inks.map((ink, i) => (
                 <React.Fragment key={`${ink.key}-${i}`}>
                     <PaletteButton
@@ -322,6 +312,8 @@ function OcSolver() {
 
     const [board, setBoard] = useState<Board>(() => makeEmptyBoard());
     const [currentInk, setCurrentInk] = useState("None");
+    const [showOrangeBoxes, setShowOrangeBoxes] = useState(false);
+    const [showYellowBoxes, setShowYellowBoxes] = useState(false);
 
     const helpers = useMemo(() => {
         const isCenter = (r: number, c: number) => r === CENTER.r && c === CENTER.c;
@@ -598,7 +590,7 @@ function OcSolver() {
         <>
             <AppTitle>Mudae '$oc' Assistant</AppTitle>
 
-            <Panel className="mb-[18px] grid grid-cols-5 gap-2 p-[15px]">
+            <Panel className="mb-[10px] grid grid-cols-5 gap-2 p-[15px]">
                 {Array.from({ length: 25 }, (_, i) => {
                     const r = Math.floor(i / N);
                     const c = i % N;
@@ -624,7 +616,10 @@ function OcSolver() {
                             : state
                                 ? 0
                                 : analysis.yellowPct[r][c];
-                    const hasAnyChance = redProb > 0 || orangeProb > 0 || yellowProb > 0;
+                    const hasAnyChance =
+                        redProb > 0 ||
+                        (showOrangeBoxes && orangeProb > 0) ||
+                        (showYellowBoxes && yellowProb > 0);
                     const displayMode = helpers.isCenter(r, c) ? "center" : state ? "marked" : hasAnyChance ? "live" : "empty";
 
                     const allRows: Array<{
@@ -657,7 +652,12 @@ function OcSolver() {
                         },
                     ];
 
-                    const rows = allRows.filter((row) => row.prob > 0);
+                    const rows = allRows.filter((row) => {
+                        if (row.prob <= 0) return false;
+                        if (row.kind === "Orange" && !showOrangeBoxes) return false;
+                        return !(row.kind === "Yellow" && !showYellowBoxes);
+
+                    });
 
                     return (
                         <button
@@ -697,6 +697,28 @@ function OcSolver() {
                     setCurrentInk("None");
                 }}
             />
+
+            <Panel className="flex flex-col gap-2 p-[12px_15px]">
+                <label className="flex items-center gap-2 text-sm text-[#dbdee1]">
+                    <input
+                        type="checkbox"
+                        checked={showOrangeBoxes}
+                        onChange={(e) => setShowOrangeBoxes(e.target.checked)}
+                        className="h-4 w-4"
+                    />
+                    Show orange kakera %
+                </label>
+
+                <label className="flex items-center gap-2 text-sm text-[#dbdee1]">
+                    <input
+                        type="checkbox"
+                        checked={showYellowBoxes}
+                        onChange={(e) => setShowYellowBoxes(e.target.checked)}
+                        className="h-4 w-4"
+                    />
+                    Show yellow kakera %
+                </label>
+            </Panel>
         </>
     );
 }

@@ -59,7 +59,7 @@ function Icon({ src, className }: { src: string; className?: string }) {
 function SolverShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="h-screen w-full overflow-auto bg-[#313338] p-5 text-[#dbdee1]">
-            <div className="mx-auto flex w-fit flex-col items-center justify-center [zoom:1] sm:[zoom:1.25] md:[zoom:1.5] lg:[zoom:1.75]">
+            <div className="mx-auto flex w-fit flex-col items-center justify-center [zoom:0.75] sm:[zoom:1.00] md:[zoom:1.25] lg:[zoom:1.5] xl:[zoom:1.75]">
                 {children}
             </div>
         </div>

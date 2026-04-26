@@ -339,23 +339,26 @@ function OcSolver() {
         const getOrthCells = (rr: number, rc: number) => {
             const out: Array<[number, number]> = [];
             const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
             for (const [dr, dc] of dirs) {
                 const r = rr + dr;
                 const c = rc + dc;
-                if (inBounds(r, c) && !isCenter(r, c)) out.push([r, c]);
+                if (inBounds(r, c)) out.push([r, c]);
             }
+
             return out;
         };
 
         const getDiagonalCells = (rr: number, rc: number) => {
             const out: Array<[number, number]> = [];
+
             for (let r = 0; r < N; r++) {
                 for (let c = 0; c < N; c++) {
                     if (r === rr && c === rc) continue;
-                    if (isCenter(r, c)) continue;
                     if (isDiagonal(r, c, rr, rc)) out.push([r, c]);
                 }
             }
+
             return out;
         };
 
@@ -472,12 +475,17 @@ function OcSolver() {
 
         const boardHasAnyConsistentSolution = (src: Board) => {
             const candidateReds = getCandidateRedCells(src);
-            if (candidateReds.length === 0) return false;
+
             for (const [rr, rc] of candidateReds) {
                 const orangeDist = getOrangeDistributionForRed(src, rr, rc);
+                if (!orangeDist) continue;
+
                 const yellowDist = getYellowDistributionForRed(src, rr, rc);
-                if (orangeDist && yellowDist) return true;
+                if (!yellowDist) continue;
+
+                return true;
             }
+
             return false;
         };
 
@@ -501,40 +509,62 @@ function OcSolver() {
         };
 
         const analyzeBoard = (src: Board) => {
-            const candidateReds = getCandidateRedCells(src);
+            const rawCandidateReds = getCandidateRedCells(src);
+            const viable: Array<{
+                red: [number, number];
+                orangeDist: {
+                    comboCount: number;
+                    weights: number[][];
+                };
+                yellowDist: {
+                    comboCount: number;
+                    weights: number[][];
+                };
+            }> = [];
+
+            for (const [rr, rc] of rawCandidateReds) {
+                const orangeDist = getOrangeDistributionForRed(src, rr, rc);
+                if (!orangeDist) continue;
+
+                const yellowDist = getYellowDistributionForRed(src, rr, rc);
+                if (!yellowDist) continue;
+
+                viable.push({
+                    red: [rr, rc],
+                    orangeDist,
+                    yellowDist,
+                });
+            }
+
+            const candidateReds = viable.map((x) => x.red);
             const redPct = Array.from({ length: N }, () => Array(N).fill(0));
             const orangePct = Array.from({ length: N }, () => Array(N).fill(0));
             const yellowPct = Array.from({ length: N }, () => Array(N).fill(0));
-            if (candidateReds.length === 0) return { candidateReds, redPct, orangePct, yellowPct };
-            const redWeight = 1 / candidateReds.length;
-            for (const [rr, rc] of candidateReds) {
+
+            if (viable.length === 0) {
+                return { candidateReds, redPct, orangePct, yellowPct };
+            }
+
+            const redWeight = 1 / viable.length;
+
+            for (const item of viable) {
+                const [rr, rc] = item.red;
+
                 redPct[rr][rc] += redWeight;
-                const orangeDist = getOrangeDistributionForRed(src, rr, rc);
-                if (orangeDist) {
-                    const { weights, comboCount } = orangeDist;
 
-                    for (let r = 0; r < N; r++) {
-                        for (let c = 0; c < N; c++) {
-                            if (weights[r][c] > 0) {
-                                orangePct[r][c] += redWeight * (weights[r][c] / comboCount);
-                            }
+                for (let r = 0; r < N; r++) {
+                    for (let c = 0; c < N; c++) {
+                        if (item.orangeDist.weights[r][c] > 0) {
+                            orangePct[r][c] += redWeight * (item.orangeDist.weights[r][c] / item.orangeDist.comboCount);
                         }
-                    }
-                }
 
-                const yellowDist = getYellowDistributionForRed(src, rr, rc);
-                if (yellowDist) {
-                    const { weights, comboCount } = yellowDist;
-
-                    for (let r = 0; r < N; r++) {
-                        for (let c = 0; c < N; c++) {
-                            if (weights[r][c] > 0) {
-                                yellowPct[r][c] += redWeight * (weights[r][c] / comboCount);
-                            }
+                        if (item.yellowDist.weights[r][c] > 0) {
+                            yellowPct[r][c] += redWeight * (item.yellowDist.weights[r][c] / item.yellowDist.comboCount);
                         }
                     }
                 }
             }
+
             return { candidateReds, redPct, orangePct, yellowPct };
         };
 
@@ -602,25 +632,23 @@ function OcSolver() {
                             : state
                                 ? 0
                                 : analysis.redPct[r][c];
-                    const orangeProb = helpers.isCenter(r, c)
-                        ? 0
-                        : state === "Orange"
-                            ? 1
-                            : state
-                                ? 0
-                                : analysis.orangePct[r][c];
-                    const yellowProb = helpers.isCenter(r, c)
-                        ? 0
-                        : state === "Yellow"
-                            ? 1
-                            : state
-                                ? 0
-                                : analysis.yellowPct[r][c];
+
+                    const orangeProb = state === "Orange"
+                        ? 1
+                        : state
+                            ? 0
+                            : analysis.orangePct[r][c];
+
+                    const yellowProb = state === "Yellow"
+                        ? 1
+                        : state
+                            ? 0
+                            : analysis.yellowPct[r][c];
                     const hasAnyChance =
                         redProb > 0 ||
                         (showOrangeBoxes && orangeProb > 0) ||
                         (showYellowBoxes && yellowProb > 0);
-                    const displayMode = helpers.isCenter(r, c) ? "center" : state ? "marked" : hasAnyChance ? "live" : "empty";
+                    const displayMode = state ? "marked" : hasAnyChance ? "live" : helpers.isCenter(r, c) ? "center" : "empty";
 
                     const allRows: Array<{
                         kind: "Red" | "Orange" | "Yellow";

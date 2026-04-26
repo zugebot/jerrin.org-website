@@ -33,7 +33,13 @@ function cn(...parts: Array<string | false | null | undefined>) {
 }
 
 function percentText(prob: number) {
-    return `${Math.round(prob * 100)}%`;
+    if (prob <= 0) return "0%";
+
+    const pct = prob * 100;
+
+    if (pct < 1) return "<1%";
+
+    return `${Math.round(pct)}%`;
 }
 
 function mixColor(from: [number, number, number], to: [number, number, number], t: number) {
@@ -152,8 +158,25 @@ function SolverTabs({ value, onChange }: { value: "oc" | "oq" | "ot"; onChange: 
 
 function OqSolver() {
     const TOTAL_PURPLES = 4;
+    const FREE_PURPLES = 3;
     const MAX_CLICKS = 7;
-    const CLUE_VALUE: Record<string, number> = { Blue: 0, Teal: 1, Green: 2, Yellow: 3, Orange: 4 };
+
+    const CLUE_VALUE: Record<string, number> = {
+        Blue: 0,
+        Teal: 1,
+        Green: 2,
+        Yellow: 3,
+        Orange: 4,
+    };
+
+    const VALUE_CLUE: Record<number, "Blue" | "Teal" | "Green" | "Yellow" | "Orange"> = {
+        0: "Blue",
+        1: "Teal",
+        2: "Green",
+        3: "Yellow",
+        4: "Orange",
+    };
+
     const paletteInks: PaletteInk[] = [
         { key: "None", icon: ICONS.Mystery },
         { key: "Purple", icon: ICONS.Purple },
@@ -167,115 +190,372 @@ function OqSolver() {
 
     const [board, setBoard] = useState<Board>(() => makeEmptyBoard());
     const [currentInk, setCurrentInk] = useState("None");
+    const [purpleOrder, setPurpleOrder] = useState<number[]>([]);
+    const [showKakeraBoxes, setShowKakeraBoxes] = useState(false);
 
-    const countNonPurpleClicks = (src: Board) => src.flat().filter((x) => x && x !== "Purple").length;
+    const getCellId = (r: number, c: number) => r * N + c;
+
     const countPurples = (src: Board) => src.flat().filter((x) => x === "Purple").length;
 
-    const analysis = useMemo(() => {
+    const getKnownPurpleSet = (src: Board) => {
+        const out: number[] = [];
+
+        for (let r = 0; r < N; r++) {
+            for (let c = 0; c < N; c++) {
+                if (src[r][c] === "Purple") out.push(getCellId(r, c));
+            }
+        }
+
+        return out;
+    };
+
+    const getNeighborCount = (purpleSet: number[], id: number) => {
+        const rr = Math.floor(id / N);
+        const cc = id % N;
+
+        let count = 0;
+
+        for (const x of purpleSet) {
+            const r = Math.floor(x / N);
+            const c = x % N;
+
+            if (r === rr && c === cc) continue;
+            if (Math.abs(r - rr) <= 1 && Math.abs(c - cc) <= 1) count++;
+        }
+
+        return count;
+    };
+
+    const countChargedClicks = (src: Board) => {
+        const purples = countPurples(src);
+        const clueClicks = src.flat().filter((x) => x && x !== "Purple").length;
+        const chargedPurpleClicks = Math.max(0, purples - FREE_PURPLES);
+
+        return clueClicks + chargedPurpleClicks;
+    };
+
+    const getOqTextColor = (
+        kind: "Purple" | "Red" | "Blue" | "Teal" | "Green" | "Yellow" | "Orange",
+        value: number,
+        maxValue: number
+    ) => {
+        if (value <= 0 || maxValue <= 0) return "rgb(219, 222, 225)";
+
+        const normalized = value / maxValue;
+        const curved = Math.pow(normalized, 4);
+
+        const paleMap = {
+            Purple: [225, 218, 238] as [number, number, number],
+            Red: [235, 220, 220] as [number, number, number],
+            Blue: [220, 226, 236] as [number, number, number],
+            Teal: [210, 236, 236] as [number, number, number],
+            Green: [214, 236, 214] as [number, number, number],
+            Yellow: [236, 235, 210] as [number, number, number],
+            Orange: [236, 226, 214] as [number, number, number],
+        };
+
+        const vividMap = {
+            Purple: [185, 120, 255] as [number, number, number],
+            Red: [255, 70, 70] as [number, number, number],
+            Blue: [110, 155, 255] as [number, number, number],
+            Teal: [72, 225, 225] as [number, number, number],
+            Green: [85, 235, 85] as [number, number, number],
+            Yellow: [255, 235, 40] as [number, number, number],
+            Orange: [255, 170, 55] as [number, number, number],
+        };
+
+        return mixColor(paleMap[kind], vividMap[kind], curved);
+    };
+
+    const solveBoard = (src: Board) => {
         const must: number[] = [];
         const forbid: number[] = [];
         const clues: Array<{ id: number; req: number }> = [];
 
         for (let r = 0; r < N; r++) {
             for (let c = 0; c < N; c++) {
-                const s = board[r][c];
-                const id = r * N + c;
-                if (s === "Purple") must.push(id);
-                else if (s) {
+                const mark = src[r][c];
+                const id = getCellId(r, c);
+
+                if (mark === "Purple") {
+                    must.push(id);
+                } else if (mark) {
                     forbid.push(id);
-                    clues.push({ id, req: CLUE_VALUE[s] ?? 0 });
+                    clues.push({ id, req: CLUE_VALUE[mark] ?? -1 });
                 }
             }
         }
 
+        const emptyPct = Array.from({ length: N }, () => Array(N).fill(0));
+        const emptyCluePct: Record<"Blue" | "Teal" | "Green" | "Yellow" | "Orange", number[][]> = {
+            Blue: Array.from({ length: N }, () => Array(N).fill(0)),
+            Teal: Array.from({ length: N }, () => Array(N).fill(0)),
+            Green: Array.from({ length: N }, () => Array(N).fill(0)),
+            Yellow: Array.from({ length: N }, () => Array(N).fill(0)),
+            Orange: Array.from({ length: N }, () => Array(N).fill(0)),
+        };
+
+        if (must.length > TOTAL_PURPLES) {
+            return {
+                total: 0,
+                purplePct: emptyPct,
+                cluePct: emptyCluePct,
+                completions: [] as number[][],
+            };
+        }
+
         let total = 0;
-        const counts = Array(N * N).fill(0);
+        const purpleCounts = Array(N * N).fill(0);
+        const clueCounts: Record<"Blue" | "Teal" | "Green" | "Yellow" | "Orange", number[]> = {
+            Blue: Array(N * N).fill(0),
+            Teal: Array(N * N).fill(0),
+            Green: Array(N * N).fill(0),
+            Yellow: Array(N * N).fill(0),
+            Orange: Array(N * N).fill(0),
+        };
+
+        const completions: number[][] = [];
 
         for (let a = 0; a < 25; a++) {
             for (let b = a + 1; b < 25; b++) {
                 for (let c = b + 1; c < 25; c++) {
                     for (let d = c + 1; d < 25; d++) {
                         const set = [a, b, c, d];
+
                         if (!must.every((x) => set.includes(x))) continue;
                         if (forbid.some((x) => set.includes(x))) continue;
 
                         let ok = true;
-                        for (const cl of clues) {
-                            let cnt = 0;
-                            const rr = Math.floor(cl.id / 5);
-                            const cc = cl.id % 5;
-                            for (const x of set) {
-                                const r = Math.floor(x / 5);
-                                const c = x % 5;
-                                if (Math.abs(r - rr) <= 1 && Math.abs(c - cc) <= 1 && !(r === rr && c === cc)) cnt++;
-                            }
-                            if (cnt !== cl.req) {
+
+                        for (const clue of clues) {
+                            if (clue.req < 0 || getNeighborCount(set, clue.id) !== clue.req) {
                                 ok = false;
                                 break;
                             }
                         }
 
                         if (!ok) continue;
+
                         total++;
-                        set.forEach((x) => counts[x]++);
+                        completions.push(set);
+                        set.forEach((x) => purpleCounts[x]++);
+
+                        const setLookup = new Set(set);
+
+                        for (let id = 0; id < 25; id++) {
+                            if (setLookup.has(id)) continue;
+
+                            const count = Math.min(getNeighborCount(set, id), 4);
+                            const clueColor = VALUE_CLUE[count];
+                            clueCounts[clueColor][id]++;
+                        }
                     }
                 }
             }
         }
 
-        return { total, counts };
-    }, [board]);
+        const purplePct = Array.from({ length: N }, () => Array(N).fill(0));
+        const cluePct: Record<"Blue" | "Teal" | "Green" | "Yellow" | "Orange", number[][]> = {
+            Blue: Array.from({ length: N }, () => Array(N).fill(0)),
+            Teal: Array.from({ length: N }, () => Array(N).fill(0)),
+            Green: Array.from({ length: N }, () => Array(N).fill(0)),
+            Yellow: Array.from({ length: N }, () => Array(N).fill(0)),
+            Orange: Array.from({ length: N }, () => Array(N).fill(0)),
+        };
+
+        if (total > 0) {
+            for (let id = 0; id < 25; id++) {
+                const r = Math.floor(id / N);
+                const c = id % N;
+
+                purplePct[r][c] = purpleCounts[id] / total;
+                cluePct.Blue[r][c] = clueCounts.Blue[id] / total;
+                cluePct.Teal[r][c] = clueCounts.Teal[id] / total;
+                cluePct.Green[r][c] = clueCounts.Green[id] / total;
+                cluePct.Yellow[r][c] = clueCounts.Yellow[id] / total;
+                cluePct.Orange[r][c] = clueCounts.Orange[id] / total;
+            }
+        }
+
+        return { total, purplePct, cluePct, completions };
+    };
+
+    const analysis = useMemo(() => solveBoard(board), [board]);
+
+    const canPlaceMarkAt = (src: Board, r: number, c: number, value: CellMark) => {
+        const current = src[r][c];
+
+        if (current === value) return true;
+
+        const copy = src.map((row) => [...row]);
+        copy[r][c] = value;
+
+        if (countPurples(copy) > TOTAL_PURPLES) return false;
+        if (countChargedClicks(copy) > MAX_CLICKS) return false;
+
+        if (value && value !== "Purple") {
+            const req = CLUE_VALUE[value] ?? -1;
+            if (req < 0) return false;
+
+            const id = getCellId(r, c);
+            let canEverMatch = false;
+
+            for (const completion of solveBoard(copy).completions) {
+                if (getNeighborCount(completion, id) === req) {
+                    canEverMatch = true;
+                    break;
+                }
+            }
+
+            if (!canEverMatch) return false;
+        }
+
+        return solveBoard(copy).total > 0;
+    };
 
     function onCellClick(r: number, c: number) {
         setBoard((prev) => {
-            const nextValue = currentInk === "None" ? null : currentInk;
-            const prior = prev[r][c];
-            if (prior === null && nextValue && nextValue !== "Purple" && countNonPurpleClicks(prev) >= MAX_CLICKS) {
-                return prev;
-            }
+            const nextValue = currentInk === "None" ? null : (currentInk as CellMark);
+
+            if (!canPlaceMarkAt(prev, r, c, nextValue)) return prev;
+
+            const id = getCellId(r, c);
             const next = prev.map((row) => [...row]);
-            next[r][c] = nextValue as CellMark;
+            next[r][c] = nextValue;
+
+            setPurpleOrder((oldOrder) => {
+                let nextOrder = oldOrder.filter((x) => x !== id);
+
+                if (nextValue === "Purple") {
+                    nextOrder = [...nextOrder, id];
+                }
+
+                const livePurples = new Set(getKnownPurpleSet(next));
+                nextOrder = nextOrder.filter((x) => livePurples.has(x));
+
+                return nextOrder;
+            });
+
             return next;
         });
     }
 
     const purples = countPurples(board);
-    const nonPurpleCount = countNonPurpleClicks(board);
+    const chargedClicks = countChargedClicks(board);
+    const maxPurpleProb = Math.max(...analysis.purplePct.flat(), 0);
+    const maxOrangeProb = Math.max(...analysis.cluePct.Orange.flat(), 0);
+    const maxYellowProb = Math.max(...analysis.cluePct.Yellow.flat(), 0);
+    const maxGreenProb = Math.max(...analysis.cluePct.Green.flat(), 0);
+    const fourthPurpleId = purpleOrder.length >= TOTAL_PURPLES ? purpleOrder[TOTAL_PURPLES - 1] : null;
 
     return (
         <>
             <AppTitle>Mudae '$oq' Assistant</AppTitle>
             <Subtitle>
-                You get <b>7 non-purple clicks</b>. Purples are free.
+                Find <b>3 purple spheres</b>. The 4th purple turns red and counts as a click.
                 <br />
                 Blue=0, Teal=1, Green=2, Yellow=3, Orange=4 neighboring purples.
+                <br />
+                Clicks used: <b>{chargedClicks}</b> / {MAX_CLICKS}
             </Subtitle>
 
-            <Panel className="mb-[18px] grid grid-cols-5 gap-2 rounded-lg p-[15px]">
+            <Panel className="mb-[10px] grid grid-cols-5 gap-2 p-[15px]">
                 {Array.from({ length: 25 }, (_, i) => {
                     const r = Math.floor(i / N);
                     const c = i % N;
                     const state = board[r][c];
-                    const p = analysis.total ? Math.round((analysis.counts[i] / analysis.total) * 100) : 0;
+
+                    const purpleProb = state
+                        ? state === "Purple"
+                            ? 1
+                            : 0
+                        : analysis.purplePct[r][c];
+
+                    const orangeProb = state ? 0 : analysis.cluePct.Orange[r][c];
+                    const yellowProb = state ? 0 : analysis.cluePct.Yellow[r][c];
+                    const greenProb = state ? 0 : analysis.cluePct.Green[r][c];
+
+                    const stateIcon =
+                        state === "Purple" && fourthPurpleId === i
+                            ? ICONS.Red
+                            : state
+                                ? ICONS[state as IconKey]
+                                : null;
+
+                    const rows: Array<{
+                        kind: "Purple" | "Red" | "Orange" | "Yellow" | "Green";
+                        prob: number;
+                        icon: string;
+                        max: number;
+                    }> = [];
+
+                    if (!state && purpleProb > 0) {
+                        rows.push({
+                            kind: purples >= TOTAL_PURPLES - 1 ? "Red" : "Purple",
+                            prob: purpleProb,
+                            icon: purples >= TOTAL_PURPLES - 1 ? ICONS.Red : ICONS.Purple,
+                            max: maxPurpleProb,
+                        });
+                    }
+
+                    if (!state && showKakeraBoxes && orangeProb > 0) {
+                        rows.push({
+                            kind: "Orange",
+                            prob: orangeProb,
+                            icon: ICONS.Orange,
+                            max: maxOrangeProb,
+                        });
+                    }
+
+                    if (!state && showKakeraBoxes && yellowProb > 0) {
+                        rows.push({
+                            kind: "Yellow",
+                            prob: yellowProb,
+                            icon: ICONS.Yellow,
+                            max: maxYellowProb,
+                        });
+                    }
+
+                    if (!state && showKakeraBoxes && greenProb > 0) {
+                        rows.push({
+                            kind: "Green",
+                            prob: greenProb,
+                            icon: ICONS.Green,
+                            max: maxGreenProb,
+                        });
+                    }
+
+                    const displayMode = state ? "marked" : rows.length > 0 ? "live" : "empty";
+
                     return (
                         <button
                             key={i}
                             type="button"
                             onClick={() => onCellClick(r, c)}
                             className={cn(
-                                "flex h-[45px] w-[60px] select-none flex-col items-center justify-center rounded-md border border-black/10 text-[#dbdee1]",
-                                state ? "bg-[#4e5058]" : p ? "bg-[#5865f2] text-white" : "bg-[#232428] text-[#8a8f98]",
-                                nonPurpleCount >= MAX_CLICKS && !state && "cursor-not-allowed",
-                                !state && "hover:opacity-90"
+                                "flex h-16 w-16 select-none flex-col items-center justify-center overflow-hidden rounded-[10px] border p-[4px_5px] text-[#dbdee1] transition duration-100 hover:-translate-y-px",
+                                displayMode === "marked" && "border-white/20 bg-[#565a65] shadow-[0_0_0_1px_rgba(255,255,255,0.05)]",
+                                displayMode === "live" && "border-white/10 bg-[#3a3d45] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]",
+                                displayMode === "empty" && "border-white/[0.06] bg-[#2a2c32]",
+                                chargedClicks >= MAX_CLICKS && !state && currentInk !== "None" && "cursor-not-allowed"
                             )}
                         >
-                            {state ? (
-                                <Icon src={ICONS[state as IconKey]} className="h-[22px] w-[22px]" />
+                            {stateIcon ? (
+                                <Icon src={stateIcon} className="h-[24px] w-[24px]" />
                             ) : (
-                                <>
-                                    <Icon src={purples >= TOTAL_PURPLES - 1 ? ICONS.Red : ICONS.Purple} className="h-[22px] w-[22px]" />
-                                    <div className="mt-[2px] text-[0.78rem] font-black leading-none">{p}%</div>
-                                </>
+                                <div className="flex w-full flex-col items-center gap-px text-[0.62rem] leading-[1.05]">
+                                    {rows.map((row) => (
+                                        <div key={row.kind} className="grid grid-cols-[12px_20px] items-center gap-x-1 whitespace-nowrap">
+                                            <Icon src={row.icon} className="h-[9px] w-[9px]" />
+                                            <span
+                                                className="block w-5 text-right font-black tabular-nums"
+                                                style={{ color: getOqTextColor(row.kind, row.prob, row.max) }}
+                                            >
+                                                {percentText(row.prob)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </button>
                     );
@@ -288,9 +568,28 @@ function OqSolver() {
                 onSelect={setCurrentInk}
                 onClear={() => {
                     setBoard(makeEmptyBoard());
+                    setPurpleOrder([]);
                     setCurrentInk("None");
                 }}
             />
+
+            <Panel className="flex flex-col gap-2 p-[12px_15px]">
+                <label className="flex items-center gap-2 text-sm text-[#dbdee1]">
+                    <input
+                        type="checkbox"
+                        checked={showKakeraBoxes}
+                        onChange={(e) => setShowKakeraBoxes(e.target.checked)}
+                        className="h-4 w-4"
+                    />
+                    <span className="inline-flex items-center gap-1">
+                        Show
+                        <Icon src={ICONS.Orange} className="h-4 w-4" />
+                        <Icon src={ICONS.Yellow} className="h-4 w-4" />
+                        <Icon src={ICONS.Green} className="h-4 w-4" />
+                        %
+                    </span>
+                </label>
+            </Panel>
         </>
     );
 }
@@ -299,6 +598,8 @@ function OcSolver() {
     const CENTER = { r: 2, c: 2 };
     const ORANGE_COUNT = 2;
     const YELLOW_COUNT = 3;
+    const GREEN_COUNT = 4;
+
     const paletteInks: PaletteInk[] = [
         { key: "None", icon: ICONS.Mystery },
         { key: "Teal", icon: ICONS.Teal },
@@ -312,28 +613,38 @@ function OcSolver() {
 
     const [board, setBoard] = useState<Board>(() => makeEmptyBoard());
     const [currentInk, setCurrentInk] = useState("None");
-    const [showOrangeBoxes, setShowOrangeBoxes] = useState(false);
-    const [showYellowBoxes, setShowYellowBoxes] = useState(false);
+    const [showYellowOrangeBoxes, setShowYellowOrangeBoxes] = useState(false);
+    //  const [showYellowBoxes, setShowYellowBoxes] = useState(false);
+    const [showGreenBoxes, setShowGreenBoxes] = useState(false);
 
     const helpers = useMemo(() => {
         const isCenter = (r: number, c: number) => r === CENTER.r && c === CENTER.c;
         const inBounds = (r: number, c: number) => r >= 0 && r < N && c >= 0 && c < N;
         const getMark = (src: Board, r: number, c: number) => src[r][c];
         const getPlacedCount = (src: Board, color: string) => src.flat().filter((v) => v === color).length;
+        const cellKey = (r: number, c: number) => `${r},${c}`;
+
         const getPlacedRedCell = (src: Board): [number, number] | null => {
-            for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (src[r][c] === "Red") return [r, c];
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    if (src[r][c] === "Red") return [r, c];
+                }
+            }
             return null;
         };
+
         const isOrthAdjacent = (r1: number, c1: number, r2: number, c2: number) => {
             const dr = Math.abs(r1 - r2);
             const dc = Math.abs(c1 - c2);
             return (dr === 1 && dc === 0) || (dr === 0 && dc === 1);
         };
+
         const isDiagonal = (r1: number, c1: number, r2: number, c2: number) => {
             const dr = Math.abs(r1 - r2);
             const dc = Math.abs(c1 - c2);
             return dr === dc && dr > 0;
         };
+
         const isLine = (r1: number, c1: number, r2: number, c2: number) => r1 === r2 || c1 === c2;
 
         const getOrthCells = (rr: number, rc: number) => {
@@ -362,35 +673,60 @@ function OcSolver() {
             return out;
         };
 
+        const getLineCells = (rr: number, rc: number) => {
+            const out: Array<[number, number]> = [];
+
+            for (let r = 0; r < N; r++) {
+                for (let c = 0; c < N; c++) {
+                    if (r === rr && c === rc) continue;
+                    if (isLine(r, c, rr, rc)) out.push([r, c]);
+                }
+            }
+
+            return out;
+        };
+
         const combinations = <T,>(arr: T[], k: number): T[][] => {
             const result: T[][] = [];
             const cur: T[] = [];
+
             const dfs = (start: number) => {
                 if (cur.length === k) {
                     result.push([...cur]);
                     return;
                 }
+
                 for (let i = start; i < arr.length; i++) {
                     cur.push(arr[i]);
                     dfs(i + 1);
                     cur.pop();
                 }
             };
+
             if (k === 0) return [[]];
             if (k < 0 || k > arr.length) return [];
+
             dfs(0);
             return result;
         };
 
+        const cellsConflict = (a: Array<[number, number]>, b: Array<[number, number]>) => {
+            const seen = new Set(a.map(([r, c]) => cellKey(r, c)));
+            return b.some(([r, c]) => seen.has(cellKey(r, c)));
+        };
+
         const isValidRed = (src: Board, rr: number, rc: number) => {
             if (isCenter(rr, rc)) return false;
+
             for (let r = 0; r < N; r++) {
                 for (let c = 0; c < N; c++) {
                     const mark = src[r][c];
                     if (!mark) continue;
+
                     const line = isLine(r, c, rr, rc);
                     const diag = isDiagonal(r, c, rr, rc);
                     const orthAdj = isOrthAdjacent(r, c, rr, rc);
+
                     if (mark === "Teal" && !(line || diag)) return false;
                     if (mark === "Blue" && (line || diag)) return false;
                     if (mark === "Yellow" && !diag) return false;
@@ -399,16 +735,20 @@ function OcSolver() {
                     if (mark === "Red" && !(r === rr && c === rc)) return false;
                 }
             }
+
             return true;
         };
 
         const getCandidateRedCells = (src: Board) => {
             const placedRed = getPlacedRedCell(src);
+
             if (placedRed) {
                 const [rr, rc] = placedRed;
                 return isValidRed(src, rr, rc) ? [[rr, rc] as [number, number]] : [];
             }
+
             const out: Array<[number, number]> = [];
+
             for (let r = 0; r < N; r++) {
                 for (let c = 0; c < N; c++) {
                     if (isCenter(r, c)) continue;
@@ -416,74 +756,99 @@ function OcSolver() {
                     if (isValidRed(src, r, c)) out.push([r, c]);
                 }
             }
+
             return out;
         };
 
-        const getOrangeDistributionForRed = (src: Board, rr: number, rc: number) => {
-            const orth = getOrthCells(rr, rc);
+        const buildColorOptionsForRed = (
+            src: Board,
+            rr: number,
+            rc: number,
+            color: "Orange" | "Yellow" | "Green",
+            count: number,
+            allowedCells: Array<[number, number]>,
+            isAllowed: (r: number, c: number) => boolean
+        ) => {
             const forced: Array<[number, number]> = [];
             const open: Array<[number, number]> = [];
-            for (const [r, c] of orth) {
+
+            for (const [r, c] of allowedCells) {
                 const mark = getMark(src, r, c);
-                if (mark === "Orange") forced.push([r, c]);
+                if (mark === color) forced.push([r, c]);
                 else if (mark === null) open.push([r, c]);
             }
+
             for (let r = 0; r < N; r++) {
                 for (let c = 0; c < N; c++) {
-                    if (getMark(src, r, c) !== "Orange") continue;
-                    if (!isOrthAdjacent(r, c, rr, rc)) return null;
+                    if (getMark(src, r, c) !== color) continue;
+                    if (!isAllowed(r, c)) return [];
                 }
             }
-            if (forced.length > ORANGE_COUNT) return null;
-            const need = ORANGE_COUNT - forced.length;
-            const combos = combinations(open, need);
-            if (combos.length === 0) return null;
-            const weights = Array.from({ length: N }, () => Array(N).fill(0));
-            for (const extra of combos) {
-                const set = [...forced, ...extra];
-                for (const [r, c] of set) weights[r][c] += 1;
-            }
-            return { comboCount: combos.length, weights };
+
+            if (forced.length > count) return [];
+
+            const need = count - forced.length;
+            return combinations(open, need).map((extra) => [...forced, ...extra]);
         };
 
-        const getYellowDistributionForRed = (src: Board, rr: number, rc: number) => {
-            const diag = getDiagonalCells(rr, rc);
-            const forced: Array<[number, number]> = [];
-            const open: Array<[number, number]> = [];
-            for (const [r, c] of diag) {
-                const mark = getMark(src, r, c);
-                if (mark === "Yellow") forced.push([r, c]);
-                else if (mark === null) open.push([r, c]);
-            }
-            for (let r = 0; r < N; r++) {
-                for (let c = 0; c < N; c++) {
-                    if (getMark(src, r, c) !== "Yellow") continue;
-                    if (!isDiagonal(r, c, rr, rc)) return null;
+        const getJointDistributionsForRed = (src: Board, rr: number, rc: number) => {
+            const orangeOptions = buildColorOptionsForRed(
+                src,
+                rr,
+                rc,
+                "Orange",
+                ORANGE_COUNT,
+                getOrthCells(rr, rc),
+                (r, c) => isOrthAdjacent(r, c, rr, rc)
+            );
+
+            const yellowOptions = buildColorOptionsForRed(
+                src,
+                rr,
+                rc,
+                "Yellow",
+                YELLOW_COUNT,
+                getDiagonalCells(rr, rc),
+                (r, c) => isDiagonal(r, c, rr, rc)
+            );
+
+            const greenOptions = buildColorOptionsForRed(
+                src,
+                rr,
+                rc,
+                "Green",
+                GREEN_COUNT,
+                getLineCells(rr, rc),
+                (r, c) => isLine(r, c, rr, rc) && !(r === rr && c === rc)
+            );
+
+            const out: Array<{
+                orange: Array<[number, number]>;
+                yellow: Array<[number, number]>;
+                green: Array<[number, number]>;
+            }> = [];
+
+            for (const orange of orangeOptions) {
+                for (const yellow of yellowOptions) {
+                    if (cellsConflict(orange, yellow)) continue;
+
+                    for (const green of greenOptions) {
+                        if (cellsConflict(orange, green)) continue;
+                        if (cellsConflict(yellow, green)) continue;
+
+                        out.push({ orange, yellow, green });
+                    }
                 }
             }
-            if (forced.length > YELLOW_COUNT) return null;
-            const need = YELLOW_COUNT - forced.length;
-            const combos = combinations(open, need);
-            if (combos.length === 0) return null;
-            const weights = Array.from({ length: N }, () => Array(N).fill(0));
-            for (const extra of combos) {
-                const set = [...forced, ...extra];
-                for (const [r, c] of set) weights[r][c] += 1;
-            }
-            return { comboCount: combos.length, weights };
+
+            return out;
         };
 
         const boardHasAnyConsistentSolution = (src: Board) => {
             const candidateReds = getCandidateRedCells(src);
 
             for (const [rr, rc] of candidateReds) {
-                const orangeDist = getOrangeDistributionForRed(src, rr, rc);
-                if (!orangeDist) continue;
-
-                const yellowDist = getYellowDistributionForRed(src, rr, rc);
-                if (!yellowDist) continue;
-
-                return true;
+                if (getJointDistributionsForRed(src, rr, rc).length > 0) return true;
             }
 
             return false;
@@ -492,47 +857,46 @@ function OcSolver() {
         const canPlaceMarkAt = (src: Board, r: number, c: number, value: CellMark) => {
             if (value === null) return true;
             if (isCenter(r, c) && value === "Red") return false;
+
             const current = src[r][c];
             if (current === value) return true;
+
             if (value === "Red") {
                 const placedRed = getPlacedRedCell(src);
                 if (placedRed && !(placedRed[0] === r && placedRed[1] === c)) return false;
             }
+
             const copy = src.map((row) => [...row]);
             copy[r][c] = value;
+
             return (
                 getPlacedCount(copy, "Red") <= 1 &&
                 getPlacedCount(copy, "Orange") <= ORANGE_COUNT &&
                 getPlacedCount(copy, "Yellow") <= YELLOW_COUNT &&
+                getPlacedCount(copy, "Green") <= GREEN_COUNT &&
                 boardHasAnyConsistentSolution(copy)
             );
         };
 
         const analyzeBoard = (src: Board) => {
             const rawCandidateReds = getCandidateRedCells(src);
+
             const viable: Array<{
                 red: [number, number];
-                orangeDist: {
-                    comboCount: number;
-                    weights: number[][];
-                };
-                yellowDist: {
-                    comboCount: number;
-                    weights: number[][];
-                };
+                joints: Array<{
+                    orange: Array<[number, number]>;
+                    yellow: Array<[number, number]>;
+                    green: Array<[number, number]>;
+                }>;
             }> = [];
 
             for (const [rr, rc] of rawCandidateReds) {
-                const orangeDist = getOrangeDistributionForRed(src, rr, rc);
-                if (!orangeDist) continue;
-
-                const yellowDist = getYellowDistributionForRed(src, rr, rc);
-                if (!yellowDist) continue;
+                const joints = getJointDistributionsForRed(src, rr, rc);
+                if (joints.length === 0) continue;
 
                 viable.push({
                     red: [rr, rc],
-                    orangeDist,
-                    yellowDist,
+                    joints,
                 });
             }
 
@@ -540,32 +904,36 @@ function OcSolver() {
             const redPct = Array.from({ length: N }, () => Array(N).fill(0));
             const orangePct = Array.from({ length: N }, () => Array(N).fill(0));
             const yellowPct = Array.from({ length: N }, () => Array(N).fill(0));
+            const greenPct = Array.from({ length: N }, () => Array(N).fill(0));
 
             if (viable.length === 0) {
-                return { candidateReds, redPct, orangePct, yellowPct };
+                return { candidateReds, redPct, orangePct, yellowPct, greenPct };
             }
 
             const redWeight = 1 / viable.length;
 
             for (const item of viable) {
                 const [rr, rc] = item.red;
-
                 redPct[rr][rc] += redWeight;
 
-                for (let r = 0; r < N; r++) {
-                    for (let c = 0; c < N; c++) {
-                        if (item.orangeDist.weights[r][c] > 0) {
-                            orangePct[r][c] += redWeight * (item.orangeDist.weights[r][c] / item.orangeDist.comboCount);
-                        }
+                const jointWeight = redWeight / item.joints.length;
 
-                        if (item.yellowDist.weights[r][c] > 0) {
-                            yellowPct[r][c] += redWeight * (item.yellowDist.weights[r][c] / item.yellowDist.comboCount);
-                        }
+                for (const joint of item.joints) {
+                    for (const [r, c] of joint.orange) {
+                        orangePct[r][c] += jointWeight;
+                    }
+
+                    for (const [r, c] of joint.yellow) {
+                        yellowPct[r][c] += jointWeight;
+                    }
+
+                    for (const [r, c] of joint.green) {
+                        greenPct[r][c] += jointWeight;
                     }
                 }
             }
 
-            return { candidateReds, redPct, orangePct, yellowPct };
+            return { candidateReds, redPct, orangePct, yellowPct, greenPct };
         };
 
         return { isCenter, canPlaceMarkAt, analyzeBoard, getPlacedCount };
@@ -576,40 +944,54 @@ function OcSolver() {
     const getActiveTier = () => {
         const redCount = helpers.getPlacedCount(board, "Red");
         const orangeCount = helpers.getPlacedCount(board, "Orange");
+        const yellowCount = helpers.getPlacedCount(board, "Yellow");
+        const greenCount = helpers.getPlacedCount(board, "Green");
+
         if (redCount === 0) return "Red";
         if (orangeCount < ORANGE_COUNT) return "Orange";
-        return "Yellow";
+        if (yellowCount < YELLOW_COUNT) return "Yellow";
+        if (greenCount < GREEN_COUNT) return "Green";
+        return "Green";
     };
 
     const getMaxGridValue = (grid: number[][]) => Math.max(...grid.flat(), 0);
+
     const maxima = {
         redMax: getMaxGridValue(analysis.redPct),
         orangeMax: getMaxGridValue(analysis.orangePct),
         yellowMax: getMaxGridValue(analysis.yellowPct),
+        greenMax: getMaxGridValue(analysis.greenPct),
     };
 
     const tier = getActiveTier();
 
-    const getRowTextColor = (kind: "Red" | "Orange" | "Yellow", value: number, maxValue: number) => {
+    const getRowTextColor = (kind: "Red" | "Orange" | "Yellow" | "Green", value: number, maxValue: number) => {
         if (value <= 0 || maxValue <= 0) return "rgb(219, 222, 225)";
+
         const normalized = value / maxValue;
         const curved = Math.pow(normalized, 4);
+
         const paleMap = {
             Red: [235, 220, 220] as [number, number, number],
             Orange: [236, 226, 214] as [number, number, number],
             Yellow: [236, 235, 210] as [number, number, number],
+            Green: [214, 236, 214] as [number, number, number],
         };
+
         const vividMap = {
             Red: [255, 70, 70] as [number, number, number],
             Orange: [255, 170, 55] as [number, number, number],
             Yellow: [255, 235, 40] as [number, number, number],
+            Green: [85, 235, 85] as [number, number, number],
         };
+
         return mixColor(paleMap[kind], vividMap[kind], curved);
     };
 
     function setMark(r: number, c: number, value: CellMark) {
         setBoard((prev) => {
             if (!helpers.canPlaceMarkAt(prev, r, c, value)) return prev;
+
             const next = prev.map((row) => [...row]);
             next[r][c] = value;
             return next;
@@ -625,6 +1007,7 @@ function OcSolver() {
                     const r = Math.floor(i / N);
                     const c = i % N;
                     const state = board[r][c];
+
                     const redProb = helpers.isCenter(r, c)
                         ? 0
                         : state === "Red"
@@ -644,14 +1027,23 @@ function OcSolver() {
                         : state
                             ? 0
                             : analysis.yellowPct[r][c];
+
+                    const greenProb = state === "Green"
+                        ? 1
+                        : state
+                            ? 0
+                            : analysis.greenPct[r][c];
+
                     const hasAnyChance =
                         redProb > 0 ||
-                        (showOrangeBoxes && orangeProb > 0) ||
-                        (showYellowBoxes && yellowProb > 0);
+                        (showYellowOrangeBoxes && orangeProb > 0) ||
+                        // (showYellowBoxes && yellowProb > 0) ||
+                        (showGreenBoxes && greenProb > 0);
+
                     const displayMode = state ? "marked" : hasAnyChance ? "live" : helpers.isCenter(r, c) ? "center" : "empty";
 
                     const allRows: Array<{
-                        kind: "Red" | "Orange" | "Yellow";
+                        kind: "Red" | "Orange" | "Yellow" | "Green";
                         prob: number;
                         icon: string;
                         active: boolean;
@@ -678,12 +1070,20 @@ function OcSolver() {
                             active: tier === "Yellow",
                             max: Math.max(maxima.yellowMax, state === "Yellow" ? 1 : 0),
                         },
+                        {
+                            kind: "Green",
+                            prob: greenProb,
+                            icon: ICONS.Green,
+                            active: tier === "Green",
+                            max: Math.max(maxima.greenMax, state === "Green" ? 1 : 0),
+                        },
                     ];
 
                     const rows = allRows.filter((row) => {
                         if (row.prob <= 0) return false;
-                        if (row.kind === "Orange" && !showOrangeBoxes) return false;
-                        return !(row.kind === "Yellow" && !showYellowBoxes);
+                        if (row.kind === "Orange" && !showYellowOrangeBoxes) return false;
+                        if (row.kind === "Yellow" && !showYellowOrangeBoxes) return false;
+                        return !(row.kind === "Green" && !showGreenBoxes);
 
                     });
 
@@ -701,6 +1101,7 @@ function OcSolver() {
                             )}
                         >
                             {state && <Icon src={ICONS[state as IconKey]} className="mb-[2px] h-[22px] w-[22px] shrink-0" />}
+
                             <div className="flex w-full flex-col items-center gap-px text-[0.62rem] leading-[1.05]">
                                 {rows.map((row) => (
                                     <div key={row.kind} className={cn("grid grid-cols-[12px_20px] items-center gap-x-1 whitespace-nowrap", row.active && "font-black")}>
@@ -730,21 +1131,30 @@ function OcSolver() {
                 <label className="flex items-center gap-2 text-sm text-[#dbdee1]">
                     <input
                         type="checkbox"
-                        checked={showOrangeBoxes}
-                        onChange={(e) => setShowOrangeBoxes(e.target.checked)}
+                        checked={showYellowOrangeBoxes}
+                        onChange={(e) => setShowYellowOrangeBoxes(e.target.checked)}
                         className="h-4 w-4"
                     />
-                    Show orange kakera %
+                    <span className="inline-flex items-center gap-1">
+                        Show
+                        <Icon src={ICONS.Orange} className="h-4 w-4" />
+                        <Icon src={ICONS.Yellow} className="h-4 w-4" />
+                        %
+                    </span>
                 </label>
 
                 <label className="flex items-center gap-2 text-sm text-[#dbdee1]">
                     <input
                         type="checkbox"
-                        checked={showYellowBoxes}
-                        onChange={(e) => setShowYellowBoxes(e.target.checked)}
+                        checked={showGreenBoxes}
+                        onChange={(e) => setShowGreenBoxes(e.target.checked)}
                         className="h-4 w-4"
                     />
-                    Show yellow kakera %
+                    <span className="inline-flex items-center gap-1">
+                        Show
+                        <Icon src={ICONS.Green} className="h-4 w-4"/>
+                        %
+                    </span>
                 </label>
             </Panel>
         </>
@@ -754,9 +1164,9 @@ function OcSolver() {
 function OtSolver() {
     const COLOR_ORDER = ["Blue", "Teal", "Green", "Yellow", "Orange", "Black"] as const;
     const paletteInks: PaletteInk[] = [
-        { key: "None", icon: ICONS.Mystery },
-        { key: "Blue", icon: ICONS.Blue },
-        { key: "Teal", icon: ICONS.Teal },
+        {key: "None", icon: ICONS.Mystery},
+        {key: "Blue", icon: ICONS.Blue},
+        {key: "Teal", icon: ICONS.Teal },
         { key: "Green", icon: ICONS.Green },
         { key: "Yellow", icon: ICONS.Yellow },
         { key: "Orange", icon: ICONS.Orange },

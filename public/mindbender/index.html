@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mind Bender Solver</title>
+  <meta name="description" content="Paint a Chuzzle Mind Bender puzzle and get its shortest solution, solved in your browser.">
+  <meta name="theme-color" content="#0c0a1c">
+  <link rel="preload" href="assets/chuzzles.webp" as="image">
+  <link rel="preload" href="assets/eyes.webp" as="image">
+  <link rel="preload" href="assets/huge.webp" as="image">
+  <link rel="preload" href="assets/frame.webp" as="image">
+  <link rel="preload" href="assets/bauhaus36.webp" as="image">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="bar">
+      <div class="brand">
+        <span class="logo" id="logo" aria-hidden="true"></span>
+        <span class="brand-name" aria-label="Mind Bender Solver"><span id="brandMain"></span><span class="brand-sub" id="brandSub"></span></span>
+      </div>
+      <div class="bar-right">
+        <div class="mode-switch" role="group" aria-label="Puzzle">
+          <button type="button" class="mode-btn" id="customBtn" aria-pressed="true"><span data-label="Custom puzzle" data-mode></span></button>
+          <button type="button" class="mode-btn" id="puzzlesBtn" aria-pressed="false"><span data-label="Game puzzles" data-mode></span></button>
+        </div>
+        <button type="button" class="icon-btn" id="settingsBtn" data-icon="gear" aria-label="Settings"></button>
+        <button type="button" class="icon-btn" id="helpBtn" data-icon="help" aria-label="Help"></button>
+      </div>
+    </header>
+
+    <div class="subbar">
+      <p class="info" id="info"></p>
+      <div class="coach" id="coach" hidden>
+        <span class="coach-n" id="coachN"></span>
+        <p class="coach-text" id="coachText"></p>
+        <button type="button" class="coach-btn" id="coachNext">Next</button>
+        <button type="button" class="coach-skip" id="coachSkip">Skip</button>
+      </div>
+      <div class="sol-switch" id="solSwitch" hidden>
+        <button type="button" class="text-btn" id="editBtn" aria-label="Edit the boards"><span class="orb mini" data-icon="pencil"></span><span data-label="Edit" data-gold></span></button>
+        <div class="sol-nav plaque">
+          <button type="button" class="icon-btn" id="prevSol" data-icon="left" aria-label="Previous solution"></button>
+          <span class="sol-label" id="solLabel"></span>
+          <button type="button" class="icon-btn" id="nextSol" data-icon="right" aria-label="Next solution"></button>
+        </div>
+        <button type="button" class="text-btn" id="listBtn" aria-label="All solutions"><span data-label="All" data-gold></span><span class="orb mini" data-icon="list"></span></button>
+      </div>
+    </div>
+
+    <main class="stage" id="stage" aria-label="Boards">
+      <div class="seg" role="tablist" aria-label="Board">
+        <button type="button" role="tab" class="seg-btn" data-side="goal" id="tabGoal">
+          <canvas class="thumb" id="thumbGoal" aria-hidden="true"></canvas><span id="tabGoalLabel"></span>
+        </button>
+        <button type="button" role="tab" class="seg-btn" data-side="start" id="tabStart">
+          <canvas class="thumb" id="thumbStart" aria-hidden="true"></canvas><span id="tabStartLabel"></span>
+        </button>
+      </div>
+      <div class="boards">
+        <figure class="board-wrap" data-side="goal" id="goalWrap">
+          <figcaption><span class="cap" id="goalCap"></span></figcaption>
+          <div class="board-frame"><div class="board" id="goalBoard" role="grid" aria-label="Goal board"></div></div>
+        </figure>
+        <div class="to" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 12H7m5.5-6.5L6 12l6.5 6.5"/></svg></div>
+        <figure class="board-wrap" data-side="start" id="startWrap">
+          <figcaption><span class="cap" id="startCap"></span></figcaption>
+          <div class="board-frame" id="startFrame">
+            <div class="board" id="startBoard" role="grid" aria-label="Start board"></div>
+            <div class="guide" id="guide" aria-hidden="true" hidden>
+              <svg class="guide-arrow" id="guideArrow"><defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto"><path d="M0 0 10 5 0 10z"/></marker></defs><path id="guidePath" marker-end="url(#ah)"/></svg>
+              <div class="guide-ring" id="guideRing"></div>
+              <div class="guide-cursor" id="guideCursor"></div>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </main>
+
+    <section class="dock" aria-label="Controls">
+      <div class="dock-inner" id="editDock">
+        <div class="palette" id="palette" role="radiogroup" aria-label="Paint colour"></div>
+        <div class="tools" role="toolbar" aria-label="Board tools">
+          <button type="button" class="tool" id="undoBtn" title="Undo (Ctrl+Z)"><span class="orb" data-icon="undo"></span><span class="tool-text" data-label="Undo"></span></button>
+          <button type="button" class="tool" id="fillBtn"><span class="orb" data-icon="bucket"></span><span class="tool-text" data-label="Fill"></span></button>
+          <button type="button" class="tool" id="scrambleBtn" title="Scramble the start with 30 random moves"><span class="orb" data-icon="shuffle"></span><span class="tool-text" data-label="Mix"></span></button>
+          <button type="button" class="tool" id="resetBtn" title="Put the start back to the goal"><span class="orb" data-icon="reset"></span><span class="tool-text" data-label="Reset"></span></button>
+          <button type="button" class="tool" id="pictureBtn" title="Fill both boards from a screenshot of the game"><span class="orb" data-icon="picture"></span><span class="tool-text" data-label="Picture"></span></button>
+          <button type="button" class="tool" id="shareBtn" title="Copy a link to this puzzle"><span class="orb" data-icon="link" id="shareOrb"></span><span class="tool-text" data-label="Link"></span></button>
+          <button type="button" class="tool" id="unfatBtn" title="Remove the 2x2 Chuzzle"><span class="orb" data-icon="unpiece"></span><span class="tool-text" data-label="No 2x2"></span></button>
+        </div>
+      </div>
+
+      <div class="dock-inner replay" id="replayDock" hidden>
+        <p class="step" id="stepText" aria-live="polite"></p>
+        <div class="track">
+          <button type="button" class="icon-btn play" id="playBtn" data-icon="play" aria-label="Play"></button>
+          <div class="line plaque">
+            <button type="button" class="icon-btn" id="firstBtn" data-icon="first" aria-label="Back to the start"></button>
+            <button type="button" class="icon-btn" id="prevBtn" data-icon="left" aria-label="Previous move"></button>
+            <div class="chips" id="replayChips"></div>
+            <button type="button" class="icon-btn" id="nextBtn" data-icon="right" aria-label="Next move"></button>
+            <button type="button" class="icon-btn" id="lastBtn" data-icon="last" aria-label="Jump to the end"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="solve-box" id="solveBox">
+        <div class="depth plaque" id="depthBox" role="group" aria-label="Longest solution to search for">
+          <button type="button" class="icon-btn small" id="depthDown" data-icon="minus" aria-label="Search fewer moves"></button>
+          <span class="depth-text"><span id="depthText"></span></span>
+          <button type="button" class="icon-btn small" id="depthUpBtn" data-icon="plus" aria-label="Search more moves"></button>
+        </div>
+        <span class="solve-wrap">
+          <button type="button" class="solve" id="solveBtn" aria-label="Solve">
+            <span class="solve-orb">
+              <span class="solve-fill" id="solveFill"></span>
+              <span class="solve-label" id="solveLabel"></span>
+            </span>
+          </button>
+          <canvas class="solve-arrows" id="solveArrows" aria-hidden="true"></canvas>
+        </span>
+        <button type="button" class="icon-btn cancel" id="cancelBtn" data-icon="x" aria-label="Cancel" hidden></button>
+      </div>
+      <p class="status" id="status" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <section class="results" id="results" hidden>
+    <div class="res-head">
+      <div>
+        <div class="res-title" id="resultTitle"></div>
+        <div class="res-sub" id="resultSub"></div>
+      </div>
+      <div class="res-actions">
+        <button type="button" class="icon-btn" id="copyAllBtn" data-icon="clipboard" aria-label="Copy all solutions" title="Copy all solutions"></button>
+        <button type="button" class="icon-btn" id="downloadBtn" data-icon="download" aria-label="Download solutions" title="Download as .txt"></button>
+        <button type="button" class="icon-btn" id="upBtn" data-icon="up" aria-label="Back to the board" title="Back to the board"></button>
+      </div>
+    </div>
+    <p class="stale" id="staleNote" hidden>The boards have changed since this solve.</p>
+    <ol class="solutions" id="solutionList"></ol>
+    <button type="button" class="text-btn more" id="moreBtn" hidden></button>
+  </section>
+
+  <dialog id="puzzlesDialog" class="wide fit" aria-labelledby="pzTitle">
+    <form method="dialog" class="dlg">
+      <div class="dlg-head">
+        <h2 id="pzTitle"><span id="pzTitleText">Game puzzles</span></h2>
+        <button class="icon-btn" value="close" data-icon="x" aria-label="Close"></button>
+      </div>
+      <p class="fine">The game's 100 Mind Benders, with the fewest moves each one takes.</p>
+      <div class="pz-grid" id="pzGrid"></div>
+    </form>
+  </dialog>
+
+  <dialog id="pictureDialog" aria-labelledby="picTitle">
+    <form method="dialog" class="dlg">
+      <div class="dlg-head">
+        <h2 id="picTitle"><span id="picTitleText">From a screenshot</span></h2>
+        <button class="icon-btn" value="close" data-icon="x" aria-label="Close"></button>
+      </div>
+      <p class="fine">Load a Mind Bender screenshot from Chuzzle, Chuzzle 2 or the phone game and both boards fill
+        in. Keep the goal in the shot. The picture stays on your device.</p>
+      <div class="pic-tiles">
+        <button type="button" class="pic-tile drop" id="picFileBtn">
+          <span class="orb" data-icon="picture"></span>
+          <span class="pic-name" id="picFileName"></span>
+          <span class="pic-sub" id="picFileSub">or drop it here</span>
+        </button>
+        <button type="button" class="pic-tile" id="picPasteBtn">
+          <span class="orb" data-icon="clipboard"></span>
+          <span class="pic-name" id="picPasteName"></span>
+          <span class="pic-sub" id="picPasteSub"></span>
+        </button>
+      </div>
+      <p class="fine pic-msg" id="picMsg" aria-live="polite"></p>
+      <input type="file" id="pictureFile" accept="image/*" hidden>
+    </form>
+  </dialog>
+
+  <dialog id="helpDialog" class="fit" aria-labelledby="helpTitle">
+    <form method="dialog" class="dlg">
+      <div class="dlg-head">
+        <h2 id="helpTitle"><span id="helpTitleText">How it works</span></h2>
+        <button class="icon-btn" value="close" data-icon="x" aria-label="Close"></button>
+      </div>
+      <div class="help-body" id="helpBody">
+      <p class="fine">Paint the goal, drag the start's Chuzzles to where they begin, then Solve (or open one of the
+        game's puzzles). You get a shortest solution of up to 12 moves (or every one: see Settings),
+        and proof that none is shorter. Replay it: the wand shows each drag, or make the next move yourself by dragging its row or column. It runs on your device in WebAssembly; nothing is uploaded.</p>
+      <p class="fine">All 100 of the game's puzzles are solved: View shows every shortest solution the desktop solver
+        found (up to 18 moves), with the same replay.</p>
+      <h3>Notation</h3>
+      <dl class="notation">
+        <dt><code>R14</code></dt><dd>row 1 shifted right 4</dd>
+        <dt><code>C32</code></dt><dd>column 3 shifted down 2</dd>
+        <dt><code>R453</code></dt><dd>the 2x2 Chuzzle's rows 4 and 5, right 3</dd>
+        <dt><code>C231</code></dt><dd>the 2x2 Chuzzle's columns 2 and 3, down 1</dd>
+      </dl>
+      <p class="fine">Rows count from the top, columns from the left. Shifts of 4 or 5 are easier dragged the other
+        way (right 5 = left 1), so the replay's wand drags the short way.</p>
+      <h3>Editing</h3>
+      <p class="fine">Paint the goal first: pick a colour and click or drag. The 2x2 button at the end of the palette
+        places the big Chuzzle: pick it, then tap where its top-left should go.</p>
+      <p class="fine">The start begins as a copy of the goal. Drag each of its Chuzzles to where it begins: it swaps
+        places with the one there, so the start always holds the goal's Chuzzles (repainting the goal repaints them
+        on the start too). Tapping two swaps them as well, and the 2x2 is dragged the same way. Mix scrambles the
+        start for you; Reset copies the goal again.</p>
+      <p class="fine">Picture fills both boards from a screenshot of the game: Chuzzle, Chuzzle 2 or the phone
+        game, the board with its goal beside it. Choose the file, paste it from the clipboard (Ctrl+V works anywhere
+        on the page) or drop it on the page. The picture is read on your device and goes nowhere. Check the boards
+        against the game before solving.</p>
+      <p class="fine">Right-click a Chuzzle to pick its colour. Keys 1-8 choose a colour, 9 the 2x2, Ctrl+Z
+        undoes.</p>
+      <h3>The search</h3>
+      <p class="fine">The solver builds every board within 4 moves of the start and of the goal, and joins the two in
+        the middle. The work is split over several threads, and a lane bound cuts away boards that can't reach the goal in
+        time. It checks every move sequence, so "none shorter" is exact; it stops at the first solution of the
+        shortest length unless Settings asks for all of them, which takes longer. Up to 10 moves takes seconds, 11
+        moves seconds to a minute, 12 moves from seconds to many minutes: the lane bound cuts away most of the work on boards
+        with several colours, little on boards with two or three colours spread evenly, and nothing with the 2x2
+        Chuzzle. It stops at 12 moves; longer custom puzzles need the desktop solver.</p>
+      <button type="button" class="text-btn tour" id="tourBtn">Show the tutorial again</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog" class="opt-dialog" aria-labelledby="setTitle">
+    <div class="opt-star" id="optStar" aria-hidden="true"></div>
+    <form method="dialog" class="opt" id="optFrame">
+      <h2 class="opt-title" id="setTitle"><span id="setTitleText">Settings</span></h2>
+      <div class="opt-cols">
+        <div class="opt-col" role="radiogroup" aria-labelledby="solsHead">
+          <span class="opt-head" id="solsHead"></span>
+          <button type="button" class="opt-radio" role="radio" id="solsFirst"><span class="opt-dot"></span><span class="opt-text"></span></button>
+          <button type="button" class="opt-radio" role="radio" id="solsAll"><span class="opt-dot"></span><span class="opt-text"></span></button>
+          <div class="opt-notes">
+            <p class="opt-note" id="noteFirst">Stops at the first shortest solution it finds. Every shorter length is
+              still searched in full, so it is still the fewest moves, only much sooner.</p>
+            <p class="opt-note" id="noteAll">Finds and counts every shortest solution. The last length is searched to
+              the end as well, so a long search can take several times longer.</p>
+          </div>
+        </div>
+        <fieldset class="opt-box" title="How many searches run at once. Auto uses every core; fewer keeps the computer cooler and quieter, at the cost of a slower solve speed.">
+          <legend id="threadsHead"></legend>
+          <div class="opt-list" id="threadList" role="radiogroup" aria-labelledby="threadsHead"></div>
+        </fieldset>
+      </div>
+      <button class="opt-done" value="close" aria-label="Done"></button>
+    </form>
+  </dialog>
+
+  <script src="puzzles.js"></script>
+  <script src="font.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

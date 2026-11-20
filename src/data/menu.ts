@@ -28,7 +28,8 @@ export const MENU = [
             { label: "The Rock Dating Sim", icon: "icons/games/the rock dating sim.png", href: "/apps/rockdatingsim/index.html" },
             { label: "Renderer", icon: "icons/games/snow.jpg", href: "/apps/renderer/app.html" },
             { label: "Mudae $oc/$oq/$ot Solver", icon: "icons/web-tools/orb_red.webp", href: "/mudae/" },
-            { label: "9x9 Puzzle Solver", icon: "icons/games/9x9 puzzle.png", href: "/apps/9x9Puzzle/index.html" }
+            { label: "9x9 Puzzle Solver", icon: "icons/games/9x9 puzzle.png", href: "/apps/9x9Puzzle/index.html" },
+            { label: "Mind Bender Solver", icon: "icons/games/chuzzles.png", href: "/mindbender/" }
         ],
     },
     {
